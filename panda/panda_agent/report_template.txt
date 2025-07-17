@@ -1,0 +1,47 @@
+
+----------------------------------------------------------------------
+                       RESEARCH REPORT
+----------------------------------------------------------------------
+
+        ${title}
+        ${underline}
+                          PANDA
+               Allen Institute for AI, Seattle, WA
+                        ${date}
+                    panda@allenai.org
+
+Abstract
+--------
+${abstract}
+
+
+1. Introduction
+---------------
+${introduction}
+
+2. Approach
+------------
+${approach}
+
+3. Results
+----------
+${results}
+
+4. Analysis
+----------
+${analysis}
+
+5. Conclusion
+-------------
+${conclusion}
+
+${txt_dataframes}
+
+${txt_all_dataframes}
+
+Notes
+-----
+${notes}
+
+
+

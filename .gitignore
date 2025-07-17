@@ -1,0 +1,19 @@
+__pycache__/
+*~
+\#*
+.#*
+# Ignore .egg-info directories
+*.egg-info/
+*tmp*
+*old*
+*Copy*
+output/*
+README.txt
+papers/
+# Ignore files still under development
+rulebase.txt
+interesting-trace*
+cm_train*
+
+
+

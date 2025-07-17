@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLMo's Performance on Questions With and Without Question Marks: A Comparative Analysis</title>
+    <style>
+              body {
+	              font-family: 'Arial', sans-serif;
+	              margin: 20px;
+	              line-height: 1.6;
+	          }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            color: #444;
+        }
+
+        address {
+            margin-top: 20px;
+            font-style: normal;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        summary {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>OLMo's Performance on Questions With and Without Question Marks: A Comparative Analysis</h1>
+        <i>PANDA</i><br>
+        <i>Allen Institute for AI, Seattle, WA</i></br>
+	<i>02-26-2025 15:10:10</i><br>
+	<tt>panda@allenai.org</tt>
+    </header>
+
+<section>    
+<h3>Abstract</h3>
+<i>
+The goal of this research was to determine whether the language model OLMo performs differently when answering questions that end with a question mark ('?') compared to those that do not. Our approach involved generating two datasets: one consisting of questions with question marks and another of similar questions without, then combining them for analysis. We collected answers from OLMo for both types of questions and scored them using GPT-as-judge. The findings revealed no significant difference in OLMo's performance between the two question formats, suggesting that OLMo's understanding and response capabilities are robust across variations in punctuation. This work highlights the adaptability of language models like OLMo in processing natural language inputs regardless of their syntactic variations, underscoring their potential utility in diverse linguistic contexts.
+</i>
+</section>
+    
+
+<section>
+<h2>Introduction</h2>
+The advent of sophisticated language models has revolutionized the field of natural language processing, enabling machines to perform a wide range of linguistic tasks with remarkable proficiency. A key area of interest is the models' ability to understand and respond to questions, which is fundamental for applications such as virtual assistants, chatbots, and automated customer service platforms. This research was motivated by the question of whether the presence or absence of a question mark - a common indicator of interrogative intent - affects a model's performance in answering questions.
+
+To explore this, we generated two distinct datasets: one comprising questions ending with a question mark and another consisting of similar queries phrased without this punctuation. We then combined these datasets and employed OLMo, a state-of-the-art language model, to answer each item. The responses were evaluated using GPT-as-judge for their correctness and relevance.
+
+Our main findings indicate that OLMo's performance was consistent across both types of questions, with no significant difference observed in the quality of answers provided. This suggests that OLMo can effectively interpret the intent behind a prompt regardless of its punctuation, demonstrating an advanced level of linguistic understanding that goes beyond surface syntactic features.
+</section>
+
+<section>
+  <h2>Approach</h2>
+Our approach to investigating OLMo's performance on differently punctuated questions was methodical and data-driven, encompassing the following steps:
+
+<ol>
+<li><strong>Dataset Generation:</strong> We created two separate datasets using a generative language model. The first dataset consisted of 30 questions each ending with a question mark, designed to mimic standard interrogative forms. The second dataset comprised 30 similar prompts structured as statements without a question mark, reflecting alternative ways in which questions might be posed.</li>
+<li><strong>Combining Datasets:</strong> To facilitate a balanced comparison, we merged the two datasets into one, ensuring an equal representation of both question types. Each entry was labeled accordingly to distinguish between those with and without a concluding question mark.</li>
+<li><strong>Data Collection:</strong> We utilized OLMo to answer all 60 questions in the combined dataset. The model's responses were recorded verbatim for subsequent analysis.</li>
+<li><strong>Scoring Responses:</strong> Using GPT-as-judge, we scored OLMo's answers on a scale from 0 (completely incorrect) to 10 (completely correct), normalizing these scores between 0 and 1 for consistency. This scoring process evaluated the accuracy and relevance of OLMo's answers relative to each question.</li>
+<li><strong>Data Analysis:</strong> We conducted statistical analysis on the collected scores to ascertain any significant differences in performance between the two types of questions. Specifically, we calculated mean scores for each group and performed an independent samples t-test to evaluate the null hypothesis that there is no difference in means.</li>
+</ol>
+
+This comprehensive approach allowed us to rigorously assess whether syntactic variations in how questions are presented would impact OLMo's ability to provide accurate and relevant answers.
+</section>
+
+<section>
+<h2>Results</h2>
+The experimental results were as follows:
+
+<ol>
+<li>The mean score for OLMo's answers to questions with a question mark was 0.883, while the mean score for answers to questions without a question mark was slightly lower at 0.873.</li>
+<li>An independent samples t-test between these two groups yielded a t-statistic of 0.2016 and a p-value of 0.8409, indicating that the difference in mean scores was not statistically significant.</li>
+<li>Further analysis through ideation of categories based on performance differences highlighted specific areas such as literature and biology where OLMo may have had marginally lower scores, and trivia night favorites and basic facts in science and humanities where it performed slightly better.</li>
+</ol>
+
+These results suggest that OLMo's ability to understand and respond to questions is not significantly affected by the presence or absence of a question mark at the end of the prompt. The language model demonstrated robustness in interpreting the intent behind both types of queries, maintaining consistent performance across different syntactic structures.
+</section>
+
+<section>
+<h2>Analysis</h2>
+The analysis of the results indicates that OLMo's performance is consistent across questions regardless of whether they end with a question mark. The slight difference in mean scores (0.883 for questions with a question mark versus 0.873 for those without) was not statistically significant, as evidenced by the high p-value obtained from the t-test (p = 0.8409). This suggests that OLMo does not rely heavily on punctuation to comprehend and answer questions, which is indicative of its advanced natural language understanding capabilities.
+
+Illustrative examples from our dataset further support this conclusion:
+
+<ul>
+<li><b>Question with question mark:</b> What is the capital of Iceland?
+<li><b>OLMo's answer:</b> The capital of Iceland is Reykjavik.
+</ul>
+
+<ul>
+<li><b>Statement without question mark:</b> Name the largest planet in our solar system
+<li><b>OLMo's answer:</b> The largest planet in our solar system is Jupiter.
+</ul>
+
+In both instances, OLMo provided accurate and relevant answers, demonstrating its ability to interpret the essence of the query irrespective of its form.
+
+Another example highlights how OLMo handles more complex queries:
+
+<ul>
+<li><b>Question with question mark:</b> How many elements are in the periodic table as of 2023?
+<li><b>OLMo's answer:</b> As of my knowledge cutoff date of September 2021, there are currently 118 known elements in the periodic table...
+</ul>
+
+<ul>
+<li><b>Statement without question mark:</b> Discuss the impact of vaccination on public health
+<li><b>OLMo's answer:</b> Vaccination, also known as immunization, has had a profound and positive impact on public health worldwide...
+</ul>
+
+These responses show that OLMo can handle both straightforward factual inquiries and more open-ended prompts requiring detailed explanations.
+
+The consistency in performance across different syntactic structures suggests that OLMo has been trained on a diverse set of data encompassing various phrasings and contexts. This enables it to generalize well and understand underlying intentions without relying solely on conventional cues like punctuation marks.
+</section>
+
+<section>
+<h2>Conclusion</h2>
+The research aimed to determine if OLMo's performance in answering questions was influenced by the presence of a question mark. The main findings are as follows:
+
+<ol>
+<li>There is no statistically significant difference in OLMo's performance when answering questions that end with a question mark compared to those that do not, as indicated by the close mean scores and the t-test results (p-value = 0.8409).</li>
+<li>OLMo demonstrated a high level of understanding and provided accurate responses across both datasets, suggesting robust language processing capabilities.</li>
+<li>The model's training on diverse linguistic structures likely contributes to its ability to interpret and respond correctly to various phrasings of questions.</li>
+</ol>
+
+In conclusion, OLMo's ability to answer questions is not dependent on the presence of a question mark, highlighting its potential for flexible and reliable use in natural language processing applications where query formats may vary.
+</section>
+
+<h3>Appendix: Summary of Categories</h3>
+
+<p>
+    <ul>
+      <li><b>CID:</b> The ID of the category
+      <li><b>Cov#:</b> The total number of items in this category
+      <li><b>Cov%:</b> The fraction of items in this category
+      <li><b>score:</b> The average score for items in this category
+      <li><b>adj.score:</b> The adjusted (expected) score for new items, using the Laplace continuation formula
+      <li><b>Signal:</b> The "interestingness" of the category, taken as the difference between the (adjusted) category score and overall score.
+      <li><b><font color=green>Green Categories:</font></b> The score for these categories was greater than average
+      <li><b><font color=red>Red Categories:</font></b> The score for these categories was lower than average	
+    </ul>
+    <p>
+
+<p>
+<b>categories_with_low_scores:</b>
+<p>
+<table style="border:1px solid black;">
+<tr><th>CID</th><th>cov#</th><th>cov%</th><th>score</th><th>adj.score</th><th>Signal</th><th>Category Title: Category Description</th></tr>
+<tr><td></td><td><i>30</i></td><td><i>100%</i></td><td><i>92%</i></td><td><i>92%</i></td><td><i>0</i></td><td><i>everything: The entire dataset</i></td></tr>
+<tr><td>3</td><td>1</td><td>3%</td><td>40%</td><td>87%</td><td>-4.7%</td><td><b><font color=red>Literature:</font></b> Questions about literary works and their summaries or themes.</td></tr>
+<tr><td>2</td><td>5</td><td>17%</td><td>88%</td><td>91%</td><td>-1.3%</td><td><b><font color=red>Biology:</font></b> Questions pertaining to living organisms and their biological functions.</td></tr>
+</table>
+<p>
+<b>categories_with_high_scores:</b>
+<p>
+<table style="border:1px solid black;">
+<tr><th>CID</th><th>cov#</th><th>cov%</th><th>score</th><th>adj.score</th><th>Signal</th><th>Category Title: Category Description</th></tr>
+<tr><td></td><td><i>30</i></td><td><i>100%</i></td><td><i>92%</i></td><td><i>92%</i></td><td><i>0</i></td><td><i>everything: The entire dataset</i></td></tr>
+<tr><td>2</td><td>25</td><td>83%</td><td>94%</td><td>93%</td><td>+1.4%</td><td><b><font color=green>Trivia Night Favorites:</font></b> Questions that are commonly asked in trivia games and quizzes covering a range of topics from various disciplines.</td></tr>
+<tr><td>1</td><td>22</td><td>73%</td><td>93%</td><td>93%</td><td>+0.8%</td><td><b><font color=green>Basic Facts in Science and Humanities:</font></b> Questions that are often considered common knowledge or basic facts in the fields of science and humanities, such as elementary chemistry, literature, history, culinary arts, and physics.</td></tr>
+</table>
+
+<h3>Notes</h3>
+355 GPT calls, 60 OLMo calls, 0 Together calls.
+Runtime: 20 minutes.
+
+
+
+

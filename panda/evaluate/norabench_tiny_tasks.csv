@@ -1,0 +1,13 @@
+tid,task
+1,"Topic: Math
+Task: Does OLMo know what 1 + 1 is?
+Rationale: Simple unit test."
+2,"Topic: Math
+Task: Can Llama do 4-digit addition? Test with 3 examples
+Rationale: A simple test to check the agent runs to completion"
+3,"Topic: Humor
+Task: Is OLMo or Llama better at telling jokes? Test with 3 examples
+Rationale: A simple test to check the agent runs to completion"
+4,"Topic: HCI
+Task: Do humans prefer pepsi or coke? Do an HCI experiment on human subjects
+Rationale: Check system correctly fails on impossible task"

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+              body {
+	              font-family: 'Arial', sans-serif;
+	              margin: 20px;
+	              line-height: 1.6;
+	          }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        h2 {
+            color: #444;
+        }
+
+        address {
+            margin-top: 20px;
+            font-style: normal;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        summary {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>${title}</h1>
+        <i>PANDA</i><br>
+        <i>Allen Institute for AI, Seattle, WA</i></br>
+	<i>${date}</i><br>
+	<tt>panda@allenai.org</tt>
+    </header>
+
+<section>    
+<h3>Abstract</h3>
+<i>
+${abstract}
+</i>
+</section>
+    
+
+<section>
+<h2>Introduction</h2>
+${introduction}
+</section>
+
+<section>
+  <h2>Approach</h2>
+${approach}
+</section>
+
+<section>
+  <h2>Results</h2>
+  <pre>
+    ${results}
+    </pre>
+</section>
+
+<section>
+<h2>Analysis</h2>
+${analysis}
+</section>
+
+<section>
+<h2>Conclusion</h2>
+${conclusion}
+</section>
+
+${html_dataframes}
+
+${html_all_dataframes}
+
+<h3>Notes</h3>
+${notes}
+
+
+
