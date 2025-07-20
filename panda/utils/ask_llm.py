@@ -233,8 +233,8 @@ def raw_call_olmo(prompt, temperature=0, inferd_token=config.INFERD_TOKEN, quiet
     return ""                    
 
 def call_olmo(prompt, temperature=0, cache=True, inferd_token=config.INFERD_TOKEN, quiet=True):
-    global olmo_calls    
-    olmo_calls += 1        
+#    global olmo_calls    
+#    olmo_calls += 1        
     if cache:
         return cached_call_olmo(prompt, temperature=temperature, inferd_token=inferd_token, quiet=quiet)
     else:
@@ -295,8 +295,8 @@ def raw_call_tulu(prompt, temperature=0, inferd_token=config.INFERD_TOKEN, quiet
 
 
 def call_together(prompt, model, together_key=config.TOGETHER_API_KEY, quiet=True):
-    global together_calls        
-    together_calls += 1            
+#    global together_calls        
+#    together_calls += 1            
     # quiet currently unused
     url = config.TOGETHER_ENDPOINT
 #   print("together_key =", together_key)
@@ -578,14 +578,14 @@ Example (response_format="json_object"):
     json.loads(response) = {"capital":"Phoenix", "state":"Arizona"}       # a JSON object
 """
 def call_gpt(prompts, response_format={"type":"text"}, temperature=0, cache=True, openai_api_key=config.OPENAI_API_KEY, quiet=True, model=config.DEFAULT_GPT4_MODEL):
-    global gpt_calls
+#    global gpt_calls
     if cache and temperature == 0:
 #       print(f"calling GPT cache with model = {model}...")
         response = cached_call_gpt(convert_to_hashable(prompts), response_format=convert_to_hashable(response_format),
                                    temperature=temperature, openai_api_key=openai_api_key, quiet=quiet, model=model)	# Lists not directly hashable
     else:
         response = raw_call_gpt(prompts, response_format=response_format, temperature=temperature, openai_api_key=openai_api_key, quiet=quiet, model=model)
-    gpt_calls += 1        
+#    gpt_calls += 1        
     return response        
 
 # Apply the lru_cache decorator

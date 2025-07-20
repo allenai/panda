@@ -40,7 +40,7 @@ import datetime
 import os
 import traceback
 import requests
-from func_timeout import func_timeout, FunctionTimedOut
+# from func_timeout import func_timeout, FunctionTimedOut
 from string import Template		# for build_system_prompt()
 
 # fix to avoid "RuntimeError: main thread is not in main loop" during generated code execution (can't run interactive plt in func_timeout()
@@ -797,14 +797,15 @@ def execute_action(action:str, namespace):
         tee_stderr = Tee(original_stderr, f)
         try:
             with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
-                func_timeout(agent_config.EXEC_TIMEOUT, exec, args=(command, namespace))
+#               func_timeout(agent_config.EXEC_TIMEOUT, exec, args=(command, namespace))
+                exec(command, namespace)                # timeout is so long (60 mins) hardly need to use it
                 code_to_record += command + "\n"	# new: record all successful commands
-        except FunctionTimedOut:			# FunctionTimedOut is a subclass of BaseException, not Exception, so need separate clause here
-            with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
-                observation = f"Error: Timeout!! The code took more than the max {agent_config.EXEC_TIMEOUT} secs (infinite loop)? Aborting execution..."
-                print_to_user(observation)
-                observations += observation + "\n"
-                code_to_record = "# The below command failed to execute (raised a TimeOut exception)\n" + add_hash_prefixes(command) + "\n"
+#       except FunctionTimedOut:			# FunctionTimedOut is a subclass of BaseException, not Exception, so need separate clause here
+#            with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
+#                observation = f"Error: Timeout!! The code took more than the max {agent_config.EXEC_TIMEOUT} secs (infinite loop)? Aborting execution..."
+#                print_to_user(observation)
+#                observations += observation + "\n"
+#                code_to_record = "# The below command failed to execute (raised a TimeOut exception)\n" + add_hash_prefixes(command) + "\n"
         except Exception as e:
             # Write the error message to the same buffer
             with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
