@@ -27,7 +27,7 @@ For an example output report and trace, see the /output directory. The .html fil
 
 # Usage
 
-1. Make sure you have your OpenAI key set in the environment variable OPENAI\_API\_KEY. Optional: If you also want to use Mistral/LLama, also set TOGETHER\_API\_KEY. If you want to use OLMo, also create and set your INFERD\_TOKEN (see [https://github.com/allenai/inferd/blob/main/docs/UserGuide.md](https://github.com/allenai/inferd/blob/main/docs/UserGuide.md)). If you want to use Claude, also set ANTHROPIC\_API\_KEY.
+1. Make sure you have your OpenAI key set in the environment variable OPENAI\_API\_KEY. Optional: If you also want to use Mistral/LLama, also set TOGETHER\_API\_KEY. If you want to use Claude, also set ANTHROPIC\_API\_KEY.
 2. Create a new environment, and then do:
 
 ```
@@ -47,7 +47,7 @@ $ ipython
 In [1]: import panda
 In [2]: panda.run_panda()
 What is the next research action/task you'd like me to do (or 'q' to quit)? End with blank line (**HIT RETURN TWICE**) 
-> How good is OLMo at math?
+> How good is Llama at math?
 ```
 
 **NOTE** hit \<return\> ***twice*** after you enter your task. If nothing seems to be happening, it's likely because you need to hit \<return\> a second time.
@@ -55,13 +55,13 @@ What is the next research action/task you'd like me to do (or 'q' to quit)? End 
 Some example tasks you can try:
 
 * What is 1 + 1?
-* Does OLMo know what 245 \* 2414 is?
-* Does OLMo do worse when answering questions that end in a question mark ('?') than on questions that don't have a question mark?
-* Which language model is better at telling jokes, OLMo, Llama, or Mistral?  
-* How much do OLMo and LLama find the same types of questions difficult in math?  
-* Is OLMo capable of behaving deceptively?  
-* Is OLMo capable of generating hate speech?  
-* Which foreign languages does OLMo know best?
+* Does Llama know what 245 \* 2414 is?
+* Does Llama do worse when answering questions that end in a question mark ('?') than on questions that don't have a question mark?
+* Which language model is better at telling jokes, Claude, Llama, or Mistral?  
+* How much do Claude and LLama find the same types of questions difficult in math?  
+* Is Llama capable of behaving deceptively?  
+* Is Llama capable of generating hate speech?  
+* Which foreign languages does Llama know best?
 
 Panda can also be used programmatically, passing the task as an argument:
 
