@@ -3,7 +3,7 @@ Clear cache:
 panda.utils.ask_llm.cached_call_gpt.cache_clear()
 
 TEST CASES:
-panda.utils.call_llm("What is 1 + 1?", "olmo")
+panda.utils.call_llm("What is 1 + 1?", "llama")
 
 panda.utils.call_llm_json("What is 1 + 1? Return your answer as a JSON structure {'answer':NUMBER}.")
 Out[24]: '{\n  "answer": 2\n}'     - note you then have to subsequently parse this with json.loads(answer)
@@ -22,13 +22,15 @@ from litellm import completion
 from pydantic import BaseModel
 from openai import OpenAI
 
-from . import config
-from .utils import clean_extract_json
+from . import config			# import entire file
+from .utils import clean_extract_json	# import function
+from panda.panda_agent import config as agent_config
 
 # e.g., [{ "model":"gpt-4.1","prompt_tokens": 85932,"completion_tokens": 18386,"total_tokens": 104318}, ...]
 token_counts = []
 
 def reset_token_counts():
+    global token_counts
     token_counts = []
 
 # we'll ignore the GPT versioning for now
@@ -55,7 +57,7 @@ Purpose:
     Basic access to an LLM.
 Args:
     prompt (str): The question/instruction to give to the LLM.
-    model (str): One of 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'olmo', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
+    model (str): One of 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
     temperature (int): The temperature to use during LLM generation (default 0)
 Returns:
     response (str): The LLM response.
@@ -63,7 +65,7 @@ Example:
     call_llm("Generate a new research idea about large language models.")
 ->  Title: Investigating the Impact of Multimodal Inputs on Large Language ....
 """
-def call_llm(prompt, response_format={"type":"text"}, model=config.DEFAULT_GPT4_MODEL, temperature=0, quiet=True):
+def call_llm(prompt, response_format={"type":"text"}, model=agent_config.PANDA_LLM, temperature=0, quiet=True):
 #   print("DEBUG: Calling model", model, "...")
 #   if temperature > 0:
 #        print("DEBUG: call_llm with temperature =", temperature, "\nprompt = ", repr(prompt[:50]), "...")
@@ -74,11 +76,11 @@ def call_llm(prompt, response_format={"type":"text"}, model=config.DEFAULT_GPT4_
     elif model in ["gpt4.5",config.DEFAULT_GPT45_MODEL]:
         answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=config.DEFAULT_GPT45_MODEL, quiet=quiet)    
     elif model in ["o1-mini","o3-mini","o4-mini","gpt-4.1","gpt-4.1-nano"]:
-        answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=model, quiet=quiet)    
+        answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=model, quiet=quiet)
     elif model == "llama":
-        answer =  call_together(prompt, "llama", quiet=quiet)
-    elif model == "mistral":
-        answer =  call_together(prompt, "mistral", quiet=quiet)
+        answer =  call_litellm(prompt, config.LLAMA_MODEL, quiet=quiet)
+    elif model == "mistral":									# Need a MISTRAL_API_KEY for this
+        answer =  call_litellm(prompt, config.MISTRAL_MODEL, quiet=quiet)
     elif model == "claude":
         answer =  call_litellm(prompt, config.DEFAULT_CLAUDE_MODEL, quiet=quiet)
     else:
@@ -104,7 +106,7 @@ Example:
     -> (   {'first_name': 'Barack', 'age': 61},
            '{"first_name":"Barack","age":61}'    )
 """
-def call_llm_json(prompt, response_format={"type":"json_object"}, temperature=0, max_retries=3, model=config.DEFAULT_GPT4_MODEL):
+def call_llm_json(prompt, response_format={"type":"json_object"}, temperature=0, max_retries=3, model=agent_config.PANDA_LLM):
 #   json_capable_models = ['gpt4',config.DEFAULT_GPT4_MODEL,'o1-mini','o3-mini','o4-mini','claude','gpt-4.1','gpt-4.1-nano','gpt4.5',config.DEFAULT_GPT45_MODEL]
 #   if model not in json_capable_models:
 #      raise ValueError(f"Error! call_llm_json() only works reliably with {json_capable_models}. Add a pre-call if you want to use other models.")
@@ -133,7 +135,7 @@ Example:
     print(call_llm_multiple_choice("I hit someone for fun. Was that wrong?", ["wrong","not_wrong"], model='olmo'))
 ->  wrong
 """
-def call_llm_multiple_choice(prompt, options, max_retries=3, model=config.DEFAULT_GPT4_MODEL, quiet=True):
+def call_llm_multiple_choice(prompt, options, max_retries=3, model=agent_config.PANDA_LLM, quiet=True):
 
     prompt += f" (Your answer options are {options})"
 
@@ -218,9 +220,11 @@ def raw_call_olmo(prompt, temperature=0, inferd_token=config.INFERD_TOKEN, quiet
     }
 
     for attempt in range(0,config.MAX_OLMO_ATTEMPTS):
-        try:            
+        try:
+            print("DEBUG: OLMo data =", json.dumps(data))
             response = requests.post(url, headers=headers, data=json.dumps(data), timeout=config.OLMO_TIMEOUT)
             response_lines = response.text.strip().split('\n')
+            print("DEBU: response_lines =", response_lines)
             result_tokens = []
             for line in response_lines:
                 line_json = json.loads(line)
@@ -291,79 +295,13 @@ def raw_call_tulu(prompt, temperature=0, inferd_token=config.INFERD_TOKEN, quiet
     print(f"ERROR from OLMo: Giving up completely after {config.MAX_OLMO_ATTEMPTS} tries (returning NIL)")
     return ""                    
 
-# ----------------------------------------
-
-
-def call_together(prompt, model, together_key=config.TOGETHER_API_KEY, quiet=True):
-#    global together_calls        
-#    together_calls += 1            
-    # quiet currently unused
-    url = config.TOGETHER_ENDPOINT
-#   print("together_key =", together_key)
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {together_key}"
-    }
-    if model == "llama":
-        model_details = config.LLAMA_MODEL
-    elif model == "mistral":
-        model_details = config.MISTRAL_MODEL
-    else:
-        print("Unrecognized model! ", model)
-    data = {
-        "model": model_details,
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ],
-        "stream": True,
-        "max_tokens": 1024,
-        "stop": ["</s>"]
-    }
-    if not quiet:
-        print("data =", json.dumps(data))
-
-    for attempt in range(0,config.MAX_TOGETHER_ATTEMPTS):
-        try:
-#            print('->Llama', end="")
-            response = requests.post(url, headers=headers, data=json.dumps(data), stream=True, timeout=config.TOGETHER_TIMEOUT)
-#            print('->Anora', end="")
-            if not quiet:
-                print("response =", response)
-            
-            if response.status_code == 200:
-                answer = ""
-                for line in response.iter_lines():
-                    if line:
-                        decoded_line = line.decode('utf-8')
-                        if decoded_line.strip() == 'data: [DONE]':
-                            break  # Exit the loop as the end of the data stream is reached
-                        try:
-                            if decoded_line.startswith('data:') and len(decoded_line) > 6:
-                                json_data = json.loads(decoded_line[5:])  # Remove 'data:' prefix and parse JSON
-                                text = json_data.get('choices', [{}])[0].get('text', '')
-                                answer += text
-                        except json.JSONDecodeError as e:
-                            print("JSON decode error:", e)
-                            continue  # Skip this line if it cannot be decoded
-                return answer.strip()
-            else:
-                print(f"Response error from {model} (response.status_code = {response.status_code}). Trying again...")
-                time.sleep(1)
-                
-        except Exception as e:
-            print(f"ERROR from {model}: {e}. Trying again...")                
-            
-    print(f"ERROR from {model}: Giving up completely after {config.MAX_TOGETHER_ATTEMPTS} tries (returning '')")
-    return ""            
-
-# Example usage:
-# result = call_together("Please answer as concisely as possible. What is the capital of England?", "llama")
-# print(result)
-
 # ======================================================================
 
 # panda.utils.ask_llm.call_litellm("What is your name?") -> "I don't have a name"
+# [1] GPT says this is better than what I did for call_gpt(), namely:
+#            response_json = response.json()
+#            content = response_json['choices'][0]['message']['content']
+#     because the dot-notation is cleaner, safer, refactorable (https://chatgpt.com/share/688ac049-7f10-8001-8dd5-3cb4f5e96f91)
 def call_litellm(prompts0, model=config.DEFAULT_CLAUDE_MODEL, quiet=True):
 #    print("DEBUG: Calling Claude...")
 
@@ -385,7 +323,13 @@ def call_litellm(prompts0, model=config.DEFAULT_CLAUDE_MODEL, quiet=True):
                 print("DEBUG: prompts =", prompts)
             response = completion(model=model, messages=messages)
             if response and response.choices and response.choices[0].message and response.choices[0].message.content:
-                return response.choices[0].message.content
+                content = response.choices[0].message.content		# [1]                
+                prompt_tokens = response.usage.prompt_tokens
+                completion_tokens = response.usage.completion_tokens
+                total_tokens = response.usage.total_tokens                
+                add_token_counts(model, prompt_tokens, completion_tokens, total_tokens)                
+
+                return content
             else:
                 print(f"Not getting the right response structure from {model}. Trying again...")               
         except Exception as e:
@@ -493,6 +437,7 @@ def raw_call_gpt(prompts0, response_format={"type":"text"}, temperature=0, opena
 
 # Courtesy ChatGPT
 def add_token_counts(model, prompt_tokens, completion_tokens, total_tokens):
+#   print(f"DEBUG: Adding token counts for {model}: {prompt_tokens} + {completion_tokens} = {total_tokens}")
     global token_counts  # Ensure we're modifying the global list
     # Search for an existing entry for the model
     for entry in token_counts:
@@ -627,7 +572,8 @@ convert_to_messages(["You are a helpful assistant.","Hi","How can I help?","What
  {'role': 'system', 'content': 'How can I help?'},
  {'role': 'user', 'content': 'What is your name?'}]
 """
-def convert_to_messages(input_data, model=config.DEFAULT_GPT4_MODEL, first_role="system"):      # first_role = "user" for non-GPT
+# model is unused
+def convert_to_messages(input_data, model, first_role="system"):      # first_role = "user" for non-GPT
     """
     Converts a list of strings representing a 2-way conversation to a JSON structure.
     Args:
@@ -721,80 +667,3 @@ In [83]: print(truncate_prompt(example_list, truncate_from=2, max_words=25))
 ['This is the first string.', 'Here is another one.', '...', '...', '...', '...', 'Extra strings to test.', 'More and more strings.']
 '''
 
-### ======================================================================
-
-class CalendarEvent(BaseModel):
-    name: str
-    date: str
-    participants: list[str]
-
-
-def tester2(response_format=None):
-    if isinstance(response_format, type):
-        print("input is a Class!")
-    elif isinstance(response_format, str):
-        print("Input is a String!")
-    elif isinstance(response_format, dict):
-        print("Input is a dict!")
-    else:
-        print("Input is something else...")
-
-# testit("Extract the event information from this: Alice and Bob are going to a science fair on Friday.", model="gpt-4o-2024-08-06")
-def tester(prompts, openai_api_key=config.OPENAI_API_KEY, model=config.DEFAULT_GPT4_MODEL):
-    url = config.OAI_ENDPOINT
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {openai_api_key}'
-    }
-    messages = convert_to_messages(prompts, model=model)
-    data = {
-        'model': model,
-        'messages': messages,
-        'response_format':CalendarEvent
-        }
-    try:
-        response_pydantic=client.beta.chat.completions.parse(
-            model=model,
-            messages=messages,
-            response_format=CalendarEvent)
-        print("DEBUG: response_pydantic =", response_pydantic)
-        response_json = response_pydantic.dict()
-        print("DEBUG: response_json =", response_json)
-#       content = response_json.choices[0].message.content
-        content = response_json['choices'][0]['message']['content']        
-        
-#        response = requests.post(url, headers=headers, json=data)
-#        response_json = response.json()
-#        print("DEBUG: response_json =", response_json)
-#        content = response_json['choices'][0]['message']['content']            
-    except Exception as e:
-            print(f"ERROR from {model}: {e}.")
-            content = "ERROR"
-    return content
-
-# ======================================================================
-"""
-class MathReasoning(BaseModel):
-    class Step(BaseModel):
-        explanation: str
-        output: str
-    steps: list[Step]
-    final_answer: str
-
-completion = client.beta.chat.completions.parse(
-    model="gpt-4o-2024-08-06",
-    messages=[
-        {"role": "system", "content": "You are a helpful math tutor. Guide the user through the solution step by step."},
-        {"role": "user", "content": "how can I solve 8x + 7 = -23"}
-    ],
-    response_format=MathReasoning,
-)
-
-math_reasoning = completion.choices[0].message
-
-# If the model refuses to respond, you will get a refusal message
-if (math_reasoning.refusal):
-    print(math_reasoning.refusal)
-else:
-    print(math_reasoning.parsed)
-"""

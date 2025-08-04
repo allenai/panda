@@ -13,6 +13,7 @@ import os
 from panda.utils import llm_list, map_dataframe, map_dataframe_json, map_dataframe_multiple_choice
 from . import config                                   # access config.doc var
 from panda.utils import config as utils_config      # access config.doc var in the sibling package
+from panda.panda_agent import config as agent_config
 
 # global, to track what was built
 created_datasets = []
@@ -62,18 +63,18 @@ Args:
     dataset (DataFrame): the dataset, containing items (e.g., questions) under a particular column (e.g., 'question')
     prompt_template (str): The template prompt to query model with. The template reference the item column
     answer_col (str): The DataFrame column to place the answers in
-    model (str): The model to query. For now, valid answers are 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'olmo', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
+    model (str): The model to query. For now, valid answers are 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
 Returns:
     DataFrame: The dataset DataFrame updated with the answers. (Note: the dataset Dataframe is destructively updated)
 Example:
     dataset = pd.DataFrame([{'question':'What is 1 + 1?'}, {'question':'What is 2 + 2?'}])
-    answer_questions(dataset, "Answer this question: {question}", answer_col='answer', model='olmo')
+    answer_questions(dataset, "Answer this question: {question}", answer_col='answer', model='llama')
     print(dataset)
  ->          question answer
     0  What is 1 + 1?      2
     1  What is 2 + 2?      4
 """
-def answer_questions(dataset:pd.DataFrame, prompt_template:str, answer_col:str, model='gpt4'):
+def answer_questions(dataset:pd.DataFrame, prompt_template:str, answer_col:str, model=agent_config.PANDA_LLM):
 #   print("prompt_template =", prompt_template)
     map_dataframe(dataset, prompt_template=prompt_template, output_col=answer_col, model=model)
     print(dataset)    
@@ -90,25 +91,25 @@ Args:
     prompt_template (str): The template prompt to query model with. The template reference the item column
     options (list(str)): The allowed answer options
     answer_col (str): The DataFrame column to place the answers in
-    model (str): The model to query. For now, valid answers are 'gpt4', 'olmo', 'llama', and 'mistral'
+    model (str): The model to query. For now, valid answers are 'gpt4', 'llama', and 'mistral'
 Returns:
     DataFrame: The dataset DataFrame updated with the answers. (Note: the dataset Dataframe is destructively updated)
 Example:
     dataset = pd.DataFrame([{'question':'Is water wet?'}, {'question':'Can birds fly?'}])
-    answer_questions_multiple_choice(dataset, "Answer this: {question}", options=["yes","no"], answer_col='answer', model='olmo')
+    answer_questions_multiple_choice(dataset, "Answer this: {question}", options=["yes","no"], answer_col='answer', model='llama')
     print(dataset)
     ->          question answer
     0   Is water wet?    yes
     1  Can birds fly?    yes
 """
-def answer_questions_multiple_choice(dataset:pd.DataFrame, prompt_template:str, options, answer_col:str, model='gpt4'):
+def answer_questions_multiple_choice(dataset:pd.DataFrame, prompt_template:str, options, answer_col:str, model=agent_config.PANDA_LLM):
     map_dataframe_multiple_choice(dataset, prompt_template=prompt_template, options=options, output_col=answer_col, model=model)
     print(dataset)        
 
 # ----------------------------------------
 
 config.doc['score_answers'] = """
-def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', score_range=10, model:str='gpt4'):    
+def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', score_range=10, model:str=agent_config.PANDA_LLM):    
 Purpose:
     Use model (LM-as-judge) to score a set of answers in dataset. Scores are added to the dataset DataFrame.
     The function queries the model for every row in the data frame with the instantiated prompt_template, 
@@ -118,7 +119,7 @@ Args:
     prompt_template (str): Describes how to score individual answers in each row of the dataset
     score_col (str): The column to put the scores in (default 'score').
     score_range (int): The range of scores, e.g., if scores are 0 to 10, then the score_range is 10. This is used for score normalization.
-    model (str) (optional): The model to do the scoring. Valid models are 'gpt4', 'o1-mini' and 'o3-mini'. Default is 'gpt4'
+    model (str) (optional): The model to do the scoring. Valid models are 'gpt4', 'o1-mini' and 'o3-mini'.
 Returns:
     DataFrame: The dataset DataFrame updated with the scores in score_col, and also a justification in column {score_col}_justification
 Example:
@@ -223,6 +224,8 @@ def pearson_strength(pearson_corr:float):
 
 # ======================================================================
 #	PRINTING THE DOCUMENTATION (more robust than copy-and-edit)
+# This saves the function documentation to a file, but that file is NOT used at runtime - it's purely for the reader's benefit.
+# Instead, Panda rebuilds the doc at runtime.
 # ======================================================================
 
 def save_documentation(docfile=config.FUNCTION_DOC_FILE):
@@ -244,13 +247,6 @@ USEFUL PYTHON FUNCTIONS
     config.doc['score_answers'] + DIVIDER +
     config.doc['ideate_categories_fn'] + DIVIDER +
     config.doc['examples_in_category'] + """
-2. LITERATURE TOOLS
--------------------\n""" +
-    config.doc['find_paper_ids'] + DIVIDER +
-    config.doc['get_paper_text'] + DIVIDER +
-    config.doc['summarize_paper'] + DIVIDER +
-    config.doc['ask_paper'] + DIVIDER +                      
-    config.doc['get_paper_details'] + """                     
 3. STATISTICS
 -------------\n""" +
     config.doc['spearman_strength'] + DIVIDER +
@@ -260,6 +256,17 @@ USEFUL PYTHON FUNCTIONS
     utils_config.doc['call_llm'] + DIVIDER +                    
     utils_config.doc['llm_list'])
     return documentation
+
+''' 
+UNUSED:
+2. LITERATURE TOOLS
+-------------------\n""" +
+    config.doc['find_paper_ids'] + DIVIDER +
+    config.doc['get_paper_text'] + DIVIDER +
+    config.doc['summarize_paper'] + DIVIDER +
+    config.doc['ask_paper'] + DIVIDER +                      
+    config.doc['get_paper_details'] + """                     
+'''
 
 # ----------
 

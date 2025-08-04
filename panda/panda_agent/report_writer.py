@@ -1,23 +1,3 @@
-"""
-Reflect
-Do a reflection
--------
-{...}
--------
-Thought:I've done step 3. Move to step 4 (write report)
-Now generate an action
-----------
-{action:"write_report('olmo')"}
-----------
-Action: ...
-Executing...
-In [123]: write_report('olmo')
-Generating report using GPT:
-> Create a title for the report.
-afadadsf
-> Write a paragraph
-...
-"""
 
 import os
 import pprint
@@ -96,15 +76,15 @@ Write an analysis of the results. Use the EXAMPLES_JSON_STRUCTURE that you gener
 #  "analysis_html": """
 #Write an analysis of the results. Use the EXAMPLES_JSON_STRUCTURE that you generated earlier to provide illustrative examples for this section, to make your points clear. When you provide examples, make sure you p#rovide all the details so the reader understands.""",  
 #For example, do not write things like:
-#    "For instance, in one question, OLMo provided a correct final answer but used an 
+#    "For instance, in one question, Llama provided a correct final answer but used an 
 #     incorrect method involving swapping tens and ones digits in its explanation."
 #Instead, show the example question and answer so the reader can see what you mean, e.g., write:
 #    "For instance, in one question:
 #     <ul>
 #      <li> <b>Question:</b> What is 47 + 26?
-#      <li> <b>OLMO's answer:</b> The sum of 47 and 26 is 73. You can also solve this problem using mental math:<br>First, add the tens digits: 7 + 2 = 9.<br>Then, add the ones digits: 4 + 6 = 10.<br>Since 10 is greater than or equal to the next ten, you can carry the 1 to the next addition: 9 + 1 = 10.<br>So, 47 + 26 = 73.   
+#      <li> <b>Llama's answer:</b> The sum of 47 and 26 is 73. You can also solve this problem using mental math:<br>First, add the tens digits: 7 + 2 = 9.<br>Then, add the ones digits: 4 + 6 = 10.<br>Since 10 is greater than or equal to the next ten, you can carry the 1 to the next addition: 9 + 1 = 10.<br>So, 47 + 26 = 73.   
 #     </ul>
-#    OLMo provided a correct final answer but used an incorrect method involving swapping tens and ones digits in its explanation:"
+#    Llama provided a correct final answer but used an incorrect method involving swapping tens and ones digits in its explanation:"
 #""",
   "conclusion": "Summarize conclusions of the research, in particular the main findings." + CAUTION}
 
@@ -149,7 +129,7 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
     html_report_template = Template(REPORT_HTML_TEMPLATE)
     txt_report_template = Template(REPORT_TXT_TEMPLATE)    
     report_parameters = {}				# empty dict
-    print("\nGenerating report using GPT:\n")
+    print(f"\nGenerating report using {model}:\n")
 
     # get some useful JSON
     make_report_prequeries(report_dialog)
@@ -164,7 +144,7 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
         report_dialog += [prompt]
         print("------------ Query -----------------------")
         print(prompt)
-        print("---------- GPT Reponse  ------------------")
+        print(f"---------- {model} Reponse  ------------------")
         response0 = call_llm(report_dialog, model=model)
         response = replace_special_chars_with_ascii(response0)		# get rid of non-ASCII characters that mess up the display
         report_dialog += [response]
@@ -443,7 +423,7 @@ def save_dialog(dialog=None, show_system_prompt=True, output_dir=REPORT_DIR, out
         vars_filename = output_pathstem + "-artifacts.py"        
         with open(vars_filename, "w", encoding='utf-8', errors='replace') as file:
             for var_name, var in named_vars:
-                print("Doing", var_name)
+                print("Writing artifact", var_name, "to", vars_filename, "...")
                 if isinstance(var, pd.DataFrame):
                     file.write("\nimport pandas as pd\n")
                     dict_rows = var.to_dict(orient='records')

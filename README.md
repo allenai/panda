@@ -1,4 +1,4 @@
-# Panda v1.4.7
+# Panda v1.4.8
 
 # Overview
 
@@ -15,7 +15,7 @@ For an example output report and trace, see the /output directory. The .html fil
  * v1.4.4: Add in panda/evaluate/run_astabench_evaluation.py for running ASTAbench tasks
  * v1.4.5: Restructure package, remove relative imports
  * v1.4.6: Package result outputs into a subdirectory, bug fixes
- * v1.4.7: Rename package as Panda ("plan-and-act")
+ * v1.4.8: Rename package as Panda ("plan-and-act")
 
 ## Functions:
 
@@ -24,9 +24,6 @@ For an example output report and trace, see the /output directory. The .html fil
  * panda.py(string)       # Execute Python (in string) within the exec() context that Panda runs its code in
  * panda.run_evaluation() # Run evaluation (with default panda/evaluate/norabench_tiny_tasks.csv, outputs to evaluation_output)
  * panda.run_astabench_tasks(task_file="panda/evaluate/panda_hyper_tasks.json", results_dir="hyper_results/")   # Run ASTAbench evaluation
-
-Experimental:
- * panda.run_superpanda(task="How well can Llama do math? Use difficult problems, and find categories where Llama struggles. Use just 10 examples.", results_dir="math") 
 
 # Usage
 
@@ -163,6 +160,7 @@ The step counter ensures that the plan is followed systematically without skippi
     * panda\_agent\_prompt.txt is the (long) system prompt  
     * panda\_agent\_subprompts.py contains prompt addendums depending on which mode the agent is in (planning, acting (coding), reflecting)
     * paper\_writer.py, format\_categories.py, format\_dataset.py contain Python utilities for writing the final report, and also outputing the dialog trace files
+    * superpanda.py, iterpanda.py: experimental (not used)
   * researchworld/    contains research-oriented Python utilities
     * documentation.txt    contains the documentation of the researchworld tools (utilities), for inclusion in an agent system prompt
   * utils/ contains a few shared basic Python utilities used by both researchworld and panda\_agent
@@ -172,9 +170,9 @@ The step counter ensures that the plan is followed systematically without skippi
     * -trace-long.txt: The verbatim dialog between Panda and GPT
   * evaluate/        contains utilities to run and score Panda on a dataset
     * run_evaluation.py             Run an evaluation (.csv dataset). Results placed in evaluation\_output/ by default
-    * score_answer.py          Function to score answers returned by Panda run_evaluation() function    
+    * score_answer.py               Function to score answers returned by Panda run_evaluation() function    
     * run_astabench_evaluation.py   Run an evaluation (.json (ASTABench) dataset). Results placed in astabench/ by default.
-    * norabench\_tiny\_tasks.csv    A toy .csv dataset
+    * astabench\_tiny\_tasks.csv    A toy .csv dataset
   
 # Questions, Issues, and Further Information
 

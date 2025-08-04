@@ -1,5 +1,6 @@
 
 from ..utils import call_llm_json
+from panda.panda_agent import config as agent_config
 
 # ======================================================================
 #	SCORING AN AGENT'S ANSWER (= a report)
@@ -15,11 +16,11 @@ Returns:
     score (float): The overall score (0-1), averaged over all six dimensions
     scores_json (dict): The scores along six different dimensions
 Example:
-    evaluate_report("Does OLMo know 1+1?", "Report: OLMo says 1+1=2"):
+    evaluate_report("Does Llama know 1+1?", "Report: Llama says 1+1=2"):
  -> 0.3
     {"clarity":10,  "surprisingness":0,  "soundness":10,  "interestingness":0,  "novelty":0,  "overall_quality":0}
 """
-def score_answer(task, report_text, model='gpt4'):
+def score_answer(task, report_text, model=agent_config.PANDA_LLM):
 
     # failed to produce anything -> score 0
     if not report_text:

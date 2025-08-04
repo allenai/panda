@@ -29,11 +29,11 @@ Example:
           <li><b>CID:</b> The ID of the category
           <li><b>Cov#:</b> The total number of items in this category
           <li><b>Cov%:</b> The fraction of items in this category
-          <li><b>score:</b> The average score of OLMo for items in this category
+          <li><b>score:</b> The average score of Llama for items in this category
           <li><b>adj.score:</b> The adjusted (expected) score for new items, using the Laplace continuation formula
-          <li><b>Signal:</b> The "interestingness" of the category, taken as the difference between the (adjusted) category score and overall score. A high signal indicates OLMo did unusually well or poorly in this category.
-          <li><b><font color=green>Green Categories:</font></b> OLMo's score for these categories was greater than average
-          <li><b><font color=red>Red Categories:</font></b> OLMo's score for these categories was lower than average	
+          <li><b>Signal:</b> The "interestingness" of the category, taken as the difference between the (adjusted) category score and overall score. A high signal indicates Llama did unusually well or poorly in this category.
+          <li><b><font color=green>Green Categories:</font></b> Llama's score for these categories was greater than average
+          <li><b><font color=red>Red Categories:</font></b> Llama's score for these categories was lower than average	
         </ul>
         <p>
     <table style="border:1px solid black;">

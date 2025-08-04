@@ -1,32 +1,32 @@
 
 ======================================================================
-Top-level Task: How good is OLMo at addition?
+Top-level Task: How good is Llama at addition?
 ======================================================================
-step 1: Ideate three or four *types* of addition problems, to explore where OLMo is string, and where it might be weak..
-step 2: For each addition type, generate 10 questions to test OLMo on problems of that type
-step 3: Have OLMo answer all the questions
+step 1: Ideate three or four *types* of addition problems, to explore where Llama is stoing, and where it might be weak..
+step 2: For each addition type, generate 10 questions to test Llama on problems of that type
+step 3: Have Llama answer all the questions
 step 4: Score the answers
 step 5: Compute the average scores for each addition type, and put the results in a new Dataframe table
 step 6: Articulate some conclusions about which types were easier or harder
 step 7: Write a report
 
 ======================================================================
-Top-level Task: How well can OLMo translate into different languages?
+Top-level Task: How well can Llama translate into different languages?
 ======================================================================
-step 1. Identify some languages to test OLMo on
-step 2: Generate a dataset of sentences for testing OLMo's translation capabilities
-step 3: For each language, have OLMo translate the source sentence into that language
-step 4: For each language, score OLMo's translations    
-step 5: Compute OLMo's average translation score for each language
-step 6: Data for report: Print the scores showing how well OLMo can translate to the different languages
+step 1. Identify some languages to test Llama on
+step 2: Generate a dataset of sentences for testing Llama's translation capabilities
+step 3: For each language, have Llama translate the source sentence into that language
+step 4: For each language, score Llama's translations    
+step 5: Compute Llama's average translation score for each language
+step 6: Data for report: Print the scores showing how well Llama can translate to the different languages
 step 7: Data for report: Find an example of success and failure for each language
 step 8. Write a report on the research
 
 ======================================================================
-Top-level Task: Is Olmo or Llama better at telling jokes?
+Top-level Task: Is Claude or Llama better at telling jokes?
 ======================================================================
 step 1: Generate a dataset of prompts for jokes, e.g., 'Tell me a joke about an interviewee completely misunderstanding the job description.'
-step 2: Have the two different models, olmo and llama, create jokes for each prompt
+step 2: Have the two different models, claude and llama, create jokes for each prompt
 step 3: Score the jokes, according to how funny they are    
 step 4: Compute the average funniness of each model    
 step 5: Data for report: Print out the average funniness of each model    
@@ -34,40 +34,31 @@ step 6: Data for report: Print out a good and bad example, for each model
 step 7. Write a report on the research
 
 ======================================================================
-Top-level Task: How well correlated are OLMo's and Llama's abilities at math?
+Top-level Task: How well correlated are Claude's and Llama's abilities at math?
 ======================================================================
 step 1: Generate a dataset of math problems, with a range of diffulty
-step 2: Have the two language models, olmo and llama, answer the questions
+step 2: Have the two language models, claude and llama, answer the questions
 step 3: Score the models' answers using LM-as-judge    
 step 4: See how well correlated the scores are, using the Spearman rank correlation
 step 5: Intepret the result
 step 7. Write a report on the research
 
 ======================================================================
-Top-level Task: How well can OLMo generate stories? Assess each story on fluency, creativity, and interestingness. What types of story is OLMo best at, in each of those dimensions?
+Top-level Task: How well can Llama generate stories? Assess each story on fluency, creativity, and interestingness. What types of story is Llama best at, in each of those dimensions?
 ======================================================================
 step 1: Generate a dataset of story prompts, e.g., 'Write a story about a cat who lost his tail.'
-step 2: Have OLMo generate stories for each prompt
-step 3: Score OLMo's stories along three dimensions: fluency, creativity, and interestingness
-step 4: Ideate what types of story prompt resulted in the best OLMo stories. Do this for each dimension.
+step 2: Have Llama generate stories for each prompt
+step 3: Score Llama's stories along three dimensions: fluency, creativity, and interestingness
+step 4: Ideate what types of story prompt resulted in the best Llama stories. Do this for each dimension.
 step 5. Write a report on the research
 
 ======================================================================
-Top-level Task: Characterize OLMo's knowledge about World War II
+Top-level Task: Characterize Llama's knowledge about World War II
 ======================================================================
-step 1: Ideate three or four *types* of knowledge about World War II, to explore where OLMo is strong, and where it might be weak.
+step 1: Ideate three or four *types* of knowledge about World War II, to explore where Llama is strong, and where it might be weak.
 step 2: For each knowledge type, generate 10 questions to test that knowledge
-step 3: Have OLMo answer all the questions
+step 3: Have Llama answer all the questions
 step 4: Score the answers
 step 5: Compute the average scores for each knowledge type, and put the results in a new Dataframe table
 step 6: Articulate some conclusions about which types were easier or harder
 step 7: Write a report
-
-======================================================================
-Top-level Task: Generate a literature review about the topic: To what extent do LLMs have a Theory of Mind?
-======================================================================
-step 1. Find papers about the extent to which LLMs have a Theory of Mind
-step 2. Collect summaries of those papers
-step 3: Identify the main themes in those summaries
-step 4: For each theme, generate a paragraph summarizing whe paper summaries say about it
-step 5: Collect those thematic paragraphs into a final report

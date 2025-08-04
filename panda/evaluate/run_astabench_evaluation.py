@@ -2,6 +2,12 @@
 """
 NOTE: If the results file already exists, this function will skip that eval (won't redo it)
 
+def redo_dev():
+    panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/dev_may_2025.json", results_dir="panda_easy_dev_results_gpt41", allow_shortcuts=True)
+    panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/dev_jun_2025_harpa.json", results_dir="panda_harpa_dev_results", allow_shortcuts=True)
+
+panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/test_jun_2025_harpa.json", results_dir="panda_harpa_test_results", allow_shortcuts=True)
+
 TARGETS = ["idea-98-simplified","idea-100-simplified","idea-127-simplified","idea-134-simplified","idea-141-simplified","idea-173-simplified","idea-177-simplified","idea-189-simplified","idea-301-simplified","idea-304-simplified","idea-361-simplified"]
 
 # NEW:
@@ -224,6 +230,9 @@ def run_astabench_task(tid:int, task_and_json:str, results_dir=ASTABENCH_RESULTS
         tb = traceback.format_exc()         
         results = f"Task failed (Error below)\nPanda Python error: {e}!\nTraceback:\n{tb}"
         print(results)
+        # [1] Re-write out the "done" flag
+        with open(os.path.join(results_dir, target_done_filestem + ".txt"), "w", encoding="utf-8") as file:
+            file.write("abort_python_error\n")
 
     # [7] Write out the results structure        
     results_json_path = os.path.join(results_dir, target_results_filestem + ".json")			# defined earlier

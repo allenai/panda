@@ -1,11 +1,12 @@
 
 import os
+from panda.panda_agent import config as agent_config
 
 # global var to store the tool documentation in
 doc = {}
 
 
-LLM_AS_JUDGE = 'gpt4'
+LLM_AS_JUDGE = agent_config.PANDA_LLM
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 FUNCTION_DOC_FILE = os.path.join(MODULE_DIR, "documentation_functions.txt")

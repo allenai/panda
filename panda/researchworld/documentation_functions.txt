@@ -3,9 +3,9 @@ USEFUL PYTHON FUNCTIONS
 =======================
 
 1. RESEARCH TOOLS
-=================
+-----------------
 
-def create_dataset(prompt:str, item_col:str='question'):
+def create_dataset(prompt:str, item_col:str='question', temperature:int=0):
 Purpose:
     Generate a dataset of items (e.g., questions) using prompt, and place in a new DataFrame under item_col
 Args:
@@ -13,6 +13,7 @@ Args:
         Note that items don't have be questions: they can also scenarios, situations, etc.
         It is good practice to include an example item (e.g., question) in the prompt.
     item_col (str) (optional, default 'question'): The column to put the items under
+    temperature (int): The temperature to use during LLM generation (default 0)
 Returns:
     DataFrame: A new dataframe containing the items
 Example:
@@ -39,12 +40,12 @@ Args:
     dataset (DataFrame): the dataset, containing items (e.g., questions) under a particular column (e.g., 'question')
     prompt_template (str): The template prompt to query model with. The template reference the item column
     answer_col (str): The DataFrame column to place the answers in
-    model (str): The model to query. For now, valid answers are 'gpt4', 'olmo', 'llama', and 'mistral'
+    model (str): The model to query. For now, valid answers are 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
 Returns:
     DataFrame: The dataset DataFrame updated with the answers. (Note: the dataset Dataframe is destructively updated)
 Example:
     dataset = pd.DataFrame([{'question':'What is 1 + 1?'}, {'question':'What is 2 + 2?'}])
-    answer_questions(dataset, "Answer this question: {question}", answer_col='answer', model='olmo')
+    answer_questions(dataset, "Answer this question: {question}", answer_col='answer', model='llama')
     print(dataset)
  ->          question answer
     0  What is 1 + 1?      2
@@ -52,7 +53,7 @@ Example:
 
 ----------------------------------------
 
-def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', score_range=10, model:str='gpt4'):    
+def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', score_range=10, model:str=agent_config.PANDA_LLM):    
 Purpose:
     Use model (LM-as-judge) to score a set of answers in dataset. Scores are added to the dataset DataFrame.
     The function queries the model for every row in the data frame with the instantiated prompt_template, 
@@ -62,7 +63,7 @@ Args:
     prompt_template (str): Describes how to score individual answers in each row of the dataset
     score_col (str): The column to put the scores in (default 'score').
     score_range (int): The range of scores, e.g., if scores are 0 to 10, then the score_range is 10. This is used for score normalization.
-    model (str) (optional): The model to do the scoring. Valid models are 'gpt4' and 'o1-mini'. Default is 'gpt4'
+    model (str) (optional): The model to do the scoring. Valid models are 'gpt4', 'o1-mini' and 'o3-mini'.
 Returns:
     DataFrame: The dataset DataFrame updated with the scores in score_col, and also a justification in column {score_col}_justification
 Example:
@@ -152,9 +153,8 @@ Example:
 ->    question  answer    score 
     0     1+1?       2 1.000000 
 
-
-2. STATISTICS
-=============
+3. STATISTICS
+-------------
 
 def spearman_strength(spearman_corr:float):
 Purpose:
@@ -190,16 +190,16 @@ Example:
     print(spearman_strength(0.54))
 -> moderate
 
+4. BASIC CALLS TO A LLM
+-----------------------
 
-3. BASIC CALLS TO A LLM
-=======================
-
-def call_llm(prompt:str, model:str):
+def call_llm(prompt:str, model:str, temperature:int=0):
 Purpose:
     Basic access to an LLM.
 Args:
     prompt (str): The question/instruction to give to the LLM.
-    model (str): One of 'gpt4', 'olmo', 'llama', or 'mistral'
+    model (str): One of 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
+    temperature (int): The temperature to use during LLM generation (default 0)
 Returns:
     response (str): The LLM response.
 Example:

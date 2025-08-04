@@ -1,15 +1,15 @@
  # Lines starting with '#' are extracted to automatically build documentation_plans.txt. To avoid extraction, offset with a space ' #'
 #
 ### ======================================================================
-### Top-level Task: How good is OLMo at addition?
+### Top-level Task: How good is Llama at addition?
 ### ======================================================================
 
-# step 1: Ideate three or four *types* of addition problems, to explore where OLMo is string, and where it might be weak..
-addition_types = llm_list("List three or four *types* of addition problems, to explore where OLMo is string, and where it might be weak.")
+# step 1: Ideate three or four *types* of addition problems, to explore where Llama is stoing, and where it might be weak..
+addition_types = llm_list("List three or four *types* of addition problems, to explore where Llama is strong, and where it might be weak.")
 print(addition_types)
  # -> ['Simple arithmetic addition (e.g., 2 + 3)', 'Algebraic addition involving variables (e.g., x + y = z)', ...]
 
-# step 2: For each addition type, generate 10 questions to test OLMo on problems of that type
+# step 2: For each addition type, generate 10 questions to test Llama on problems of that type
 dataset_parts = []
 for addition_type in addition_types:
     dataset_part = create_dataset(f"Generate 10 questions that test this type of addition task: {addition_type}", item_col='question')
@@ -24,8 +24,8 @@ print(dataset)
  # 10  x+2x=?      algebraic
  # ...
 
-# step 3: Have OLMo answer all the questions
-answer_questions(dataset, "Answer this addition question: {question}", answer_col='answer', model='olmo')
+# step 3: Have Llama answer all the questions
+answer_questions(dataset, "Answer this addition question: {question}", answer_col='answer', model='llama')
 print(dataset)
 
 # step 4: Score the answers
@@ -41,38 +41,38 @@ print(average_scores_df)
  #   algebraic addit  0.34
 
 # step 6: Articulate some conclusions about which types were easier or harder
-prompt = f"""The following table shows OLMo's scores when tested on different types of addition problem:
+prompt = f"""The following table shows Llama's scores when tested on different types of addition problem:
 {average_scores_df.to_string()}
-Write a short summary of the findings, in particular which categories OLMo excelled or struggled with (if any)."""
-print(call_llm(prompt, model='gpt-4.1'))
+Write a short summary of the findings, in particular which categories Llama excelled or struggled with (if any)."""
+print(call_llm(prompt))
 
 # step 7: Write a report
 write_report()
 
 #
 ### ======================================================================
-### Top-level Task: How well can OLMo translate into different languages?
+### Top-level Task: How well can Llama translate into different languages?
 ### ======================================================================
 
-# step 1. Identify some languages to test OLMo on
+# step 1. Identify some languages to test Llama on
 languages = llm_list("List the names of some different foreign languages.")
 print(languages)
 
-# step 2: Generate a dataset of sentences for testing OLMo's translation capabilities
+# step 2: Generate a dataset of sentences for testing Llama's translation capabilities
 dataset = create_dataset("Generate 20 sentences that can be used to test machine translation, e.g., 'How are you today?'", item_col='sentence')
 print(dataset)
 
-# step 3: For each language, have OLMo translate the source sentence into that language
+# step 3: For each language, have Llama translate the source sentence into that language
 for language in languages:
-    answer_questions(dataset, f"Translate this sentence to {language}: {{sentence}}", answer_col = f"translation_to_{language}", model='olmo')
+    answer_questions(dataset, f"Translate this sentence to {language}: {{sentence}}", answer_col = f"translation_to_{language}", model='llama')
 print(dataset)
 
-# step 4: For each language, score OLMo's translations    
+# step 4: For each language, score Llama's translations    
 for language in languages:
     score_answers(dataset, f"Score this translation from English to {language}. Give a score between 0 (completely wrong) and 10 (perfect):\nSentence: {{sentence}}\nTranslation: {{translation_to_{language}}}", score_col = f"{language}_score", score_range=10)
 print(dataset)
 
-# step 5: Compute OLMo's average translation score for each language
+# step 5: Compute Llama's average translation score for each language
 language_info = pd.DataFrame(languages, columns=['language'])
 for index, row in language_info.iterrows():
     language = row['language']
@@ -81,8 +81,8 @@ for index, row in language_info.iterrows():
     language_info.at[index,'score'] = average_score
 print(language_info)    
 
-# step 6: Data for report: Print the scores showing how well OLMo can translate to the different languages
-print("OLMo's translation scores, for different languages:")
+# step 6: Data for report: Print the scores showing how well Llama can translate to the different languages
+print("Llama's translation scores, for different languages:")
 language_info_sorted = language_info.sort_values(by='score', ascending=False)  # Sort by 'score' descending
 print(language_info_sorted[['language','score']].to_string(index=False))
 
@@ -100,7 +100,7 @@ for language in languages:
     worst_translation = worst_translation_row[f"translation_to_{language}"]
     worst_score = worst_translation_row[f"{language}_score"]
     worst_score_justification = worst_translation_row[f"{language}_score_justification"]        
-    print("\nOLMo's translation to", language, f"(average score: {average_score:.2f}):")
+    print("\nLlama's translation to", language, f"(average score: {average_score:.2f}):")
     print(f"Good example (score {best_score:.2f}): \"{best_sentence}\" -> \"{best_translation}\"\nComment: {best_score_justification}\n")
     print(f"Bad example (score {worst_score:.2f}): \"{worst_sentence}\" -> \"{worst_translation}\"\nComment: {worst_score_justification}\n")
 
@@ -109,15 +109,15 @@ write_report()
 
 #
 ### ======================================================================
-### Top-level Task: Is Olmo or Llama better at telling jokes?
+### Top-level Task: Is Claude or Llama better at telling jokes?
 ### ======================================================================
 
 # step 1: Generate a dataset of prompts for jokes, e.g., 'Tell me a joke about an interviewee completely misunderstanding the job description.'
 dataset = create_dataset("Generate 10 prompts for telling a joke, e.g., 'Tell me a joke about an interviewee completely misunderstanding the job description.'", item_col='prompt')
 print(dataset)
 
-# step 2: Have the two different models, olmo and llama, create jokes for each prompt
-models = ['olmo','llama']
+# step 2: Have the two different models, claude and llama, create jokes for each prompt
+models = ['claude','llama']
 for model in models:
     answer_questions(dataset, "Generate a short joke, given the following prompt: {prompt}", answer_col = f"{model}_joke", model=model)
 print(dataset)    
@@ -163,15 +163,15 @@ write_report()
 
 #
 ### ======================================================================
-### Top-level Task: How well correlated are OLMo's and Llama's abilities at math?
+### Top-level Task: How well correlated are Claude's and Llama's abilities at math?
 ### ======================================================================
 
 # step 1: Generate a dataset of math problems, with a range of diffulty
 dataset = create_dataset("Generate 30 math questions. Generate questions with a range of difficulty, from easy to difficult.")
 print(dataset)
 
-# step 2: Have the two language models, olmo and llama, answer the questions
-models = ['olmo','llama']
+# step 2: Have the two language models, claude and llama, answer the questions
+models = ['claude','llama']
 for model in models:
     answer_questions(dataset, "Answer the following math question as concisely as possible: {question}", answer_col = f"{model}_answer", model=model)
 print(dataset)    
@@ -182,8 +182,8 @@ for model in models:
 print(dataset)
 
 # step 4: See how well correlated the scores are, using the Spearman rank correlation
-spearman_corr = dataset['olmo_score'].corr(dataset['llama_score'], method='spearman')
-print(f"Spearman rank correlation between olmo's and llama's scores: {spearman_corr:.3f}")
+spearman_corr = dataset['claude_score'].corr(dataset['llama_score'], method='spearman')
+print(f"Spearman rank correlation between claude's and llama's scores: {spearman_corr:.3f}")
 
 # step 5: Intepret the result
 print(f"That is a {spearman_strength(spearman_corr)} correlation.")
@@ -193,28 +193,28 @@ write_report()
 
 #
 ### ======================================================================
-### Top-level Task: How well can OLMo generate stories? Assess each story on fluency, creativity, and interestingness. What types of story is OLMo best at, in each of those dimensions?
+### Top-level Task: How well can Llama generate stories? Assess each story on fluency, creativity, and interestingness. What types of story is Llama best at, in each of those dimensions?
 ### ======================================================================
 
 # step 1: Generate a dataset of story prompts, e.g., 'Write a story about a cat who lost his tail.'
 dataset = create_dataset("Generate 10 story prompts, e.g., 'Write a story about a cat who lost his tail.'", item_col='prompt')
 print(dataset)
 
-# step 2: Have OLMo generate stories for each prompt
-answer_questions(dataset, "Generate a short story, starting from the following prompt:\n{prompt}", answer_col='story', model='olmo')
+# step 2: Have Llama generate stories for each prompt
+answer_questions(dataset, "Generate a short story, starting from the following prompt:\n{prompt}", answer_col='story', model='llama')
 print(dataset)
 
-# step 3: Score OLMo's stories along three dimensions: fluency, creativity, and interestingness
+# step 3: Score Llama's stories along three dimensions: fluency, creativity, and interestingness
 dimensions = ['fluency','creativity','interestingness']
 for dimension in dimensions:
     score_answers(dataset, f"How good is the following story in terms of {dimension}? Give it a score between 0 ({dimension} is completely lacking) and 10 (perfect {dimension}):\nPrompt: {{prompt}}\nStory: {{story}}", score_col = f"{dimension}_score", score_range=10)
 print(dataset)
 
-# step 4: Ideate what types of story prompt resulted in the best OLMo stories. Do this for each dimension.
+# step 4: Ideate what types of story prompt resulted in the best Llama stories. Do this for each dimension.
 for dimension in dimensions:
     average_score = dataset[f"{dimension}_score"].mean()    
     best_categories = ideate_categories(dataset, item_col='prompt', score_col=f"{dimension}_score", highlow='high', n=5)              # best categories have HIGH score
-    print(f"\nIn terms of {dimension}, OLMo's average score was {average_score:.2f}.")
+    print(f"\nIn terms of {dimension}, Llama's average score was {average_score:.2f}.")
     if len(best_categories) > 1:
         best_category = best_categories.iloc[1]                  # first row is the best
         best_title = best_category['title']
@@ -223,23 +223,23 @@ for dimension in dimensions:
         top_examples = examples_in_category(dataset, category_row=best_category, score_col=f"{dimension}_score", highlow='high', n=1)
         best_example = top_examples.iloc[0]
         score_justification_col = f"{dimension}_score_justification"
-        print(f"OLMo did particularly well on stories about {best_title} ({best_description}) (average score {best_score:.2f})")
-        print(f"For example, for the prompt \"{best_example['prompt']}\", OLMo generated:\n{best_example['story']}")
+        print(f"Llama did particularly well on stories about {best_title} ({best_description}) (average score {best_score:.2f})")
+        print(f"For example, for the prompt \"{best_example['prompt']}\", Llama generated:\n{best_example['story']}")
         print(f"----------\nBecause:\n{best_example[score_justification_col]}")
         print("----------------------------------------\n")
     else:
-        print("There were no examples where OLMo did particularly well in this category.")
+        print("There were no examples where Llama did particularly well in this category.")
 
 # step 5. Write a report on the research
 write_report()
 
 #
 ### ======================================================================
-### Top-level Task: Characterize OLMo's knowledge about World War II
+### Top-level Task: Characterize Llama's knowledge about World War II
 ### ======================================================================
 
-# step 1: Ideate three or four *types* of knowledge about World War II, to explore where OLMo is strong, and where it might be weak.
-knowledge_types = llm_list("List three or four *types* of knowledge about World War II, to explore where OLMo is strong, and where it might be weak.")
+# step 1: Ideate three or four *types* of knowledge about World War II, to explore where Llama is strong, and where it might be weak.
+knowledge_types = llm_list("List three or four *types* of knowledge about World War II, to explore where Llama is strong, and where it might be weak.")
 print(knowledge_types)
  # -> ['historical','biographic',...]
 
@@ -258,8 +258,8 @@ print(dataset)
  # 10  Who is...   biographic
  # ...
 
-# step 3: Have OLMo answer all the questions
-answer_questions(dataset, "Answer this question about World War II: {question}", answer_col='answer', model='olmo')
+# step 3: Have Llama answer all the questions
+answer_questions(dataset, "Answer this question about World War II: {question}", answer_col='answer', model='llama')
 print(dataset)
 
 # step 4: Score the answers
@@ -275,46 +275,10 @@ print(average_scores_df)
  #   biographic  0.34
 
 # step 6: Articulate some conclusions about which types were easier or harder
-prompt = f"""The following table shows OLMo's scores when tested on different types of knowledge about World War II:
+prompt = f"""The following table shows Llama's scores when tested on different types of knowledge about World War II:
 {average_scores_df.to_string()}
-Write a short summary of the findings, in particular which categories OLMo excelled or struggled with (if any)."""
-print(call_llm(prompt, model='gpt-4.1'))
+Write a short summary of the findings, in particular which categories Llama excelled or struggled with (if any)."""
+print(call_llm(prompt))
 
 # step 7: Write a report
 write_report()
-
-#
-### ======================================================================
-### Top-level Task: Generate a literature review about the topic: To what extent do LLMs have a Theory of Mind?
-### ======================================================================
-
-# step 1. Find papers about the extent to which LLMs have a Theory of Mind
-task = "To what extent do LLMs have a Theory of Mind?"
-paper_ids = find_paper_ids(task)
-print(paper_ids)
-
-# step 2. Collect summaries of those papers
-summaries = ""
-for paper_id in paper_ids:
-    summary = summarize_paper(paper_id)
-    if summary:
-        summaries += summary
-
-# step 3: Identify the main themes in those summaries
-prompt = "Identify some common themes/dimensions of the following papers:" + summaries
-themes = llm_list(prompt)
-
-# step 4: For each theme, generate a paragraph summarizing whe paper summaries say about it
-report_paragraphs = {}
-for theme in themes:
-    prompt = f"Read the following paper summaries, and then write a single paragraph summarizing what they say about the following theme: {theme}" + summaries
-    report_paragraphs[theme] = call_llm(prompt)
-
-# step 5: Collect those thematic paragraphs into a final report
-title = task + ": A report"
-report = title + "\n" + "-" * len(title) + "\n\n"
-for theme in themes:
-    report += theme + "\n"
-    report += "-" * len(theme) + "\n"
-    report += report_paragraphs[theme] + "\n\n"
-print(report)

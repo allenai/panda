@@ -5,8 +5,10 @@ doc = {}
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY")
-INFERD_TOKEN = os.environ.get("INFERD_TOKEN")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+
+# Go to inferd.allen.ai to renew INFERD token
+INFERD_TOKEN = os.environ.get("INFERD_TOKEN")
 
 if OPENAI_API_KEY is None:
     print("Please set your OPENAI_API_KEY environment variable to continue!")
@@ -19,17 +21,22 @@ if ANTHROPIC_API_KEY is None:
 
 # keys and models
 OAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
-OLMO_ENDPOINT = 'https://ai2-reviz--olmoe-1b-7b-0924-instruct.modal.run/completion'  # updated 10/16/24
-OLMO_VERSION_ID = 'mov_01j1x1awwfqx23gmw0wkmb73ea'
+
+#OLMO_ENDPOINT = 'https://ai2-reviz--olmoe-1b-7b-0924-instruct.modal.run/completion'  # updated 10/16/24
+OLMO_ENDPOINT = "https://inferd.allen.ai/api/v1/infer"
+#OLMO_VERSION_ID = 'mov_01j1x1awwfqx23gmw0wkmb73ea'
+OLMO_VERSION_ID = 'mov_01j74syrtad9dyfkc7zm4jrske'    # olmo-7b-chat
+
 TOGETHER_ENDPOINT = "https://api.together.xyz/v1/chat/completions"
 
 # Not yet working
 TULU_ENDPOINT = "https://inferd.allen.ai/api/v1/infer"
 TULU_VERSION_ID = 'mov_01j1djbjemksstnx5ws82emhqs'
 
+# Now accessed through litellm
+LLAMA_MODEL = "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+MISTRAL_MODEL = "together_ai/mistralai/Mistral-7B-Instruct-v0.2"
 
-LLAMA_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"	# more recent
-MISTRAL_MODEL = "mistralai/Mixtral-8x7B-Instruct-v0.1"
 #DEFAULT_GPT4_MODEL = 'gpt-4-1106-preview'
 #DEFAULT_GPT4_MODEL = 'gpt-4o'
 #DEFAULT_GPT4_MODEL = 'gpt-4.1-nano'

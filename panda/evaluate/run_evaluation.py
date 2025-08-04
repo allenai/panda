@@ -22,7 +22,7 @@ from .score_answer import score_answer
 # ======================================================================
 
 """
-def run_evaluation(dataset_path="norabench_tasks.csv", results_file="norabench_results.csv", eval_dir=config.DEFAULT_EVAL_DIR, restart=True):
+def run_evaluation(dataset_path="astabench_tasks.csv", results_file="astabench_results.csv", eval_dir=config.DEFAULT_EVAL_DIR, restart=True):
 Purpose:
     Run a batch evaluation of Panda on a set of predefined tasks
 Args:
@@ -42,9 +42,9 @@ Side-Effects:
         generated and scored, and results_file is updated to add those scores in.
     eval_dir: The new reports and execution traces are added to aval_dir.
 Example:
-    run_evaluation(dataset_path="panda/evaluate/norabench_tiny_tasks.csv", results_file="norabench_tiny_results.csv", target_tids=[1])
+    run_evaluation(dataset_path="panda/evaluate/astabench_tiny_tasks.csv", results_file="astabench_tiny_results.csv", target_tids=[1])
 """
-def run_evaluation(dataset_path="panda/evaluate/norabench_tiny_tasks.csv", results_file="norabench_tiny_results.csv", eval_dir=config.DEFAULT_EVAL_DIR, restart=True, target_tids=None):
+def run_evaluation(dataset_path="panda/evaluate/astabench_tiny_tasks.csv", results_file="astabench_tiny_results.csv", eval_dir=config.DEFAULT_EVAL_DIR, restart=True, target_tids=None):
 
     # flush out eval_dir (unless restart = False)
     if not os.path.exists(eval_dir):
@@ -58,7 +58,7 @@ def run_evaluation(dataset_path="panda/evaluate/norabench_tiny_tasks.csv", resul
         
     results_path = os.path.join(eval_dir, results_file)
 
-    # 1. read in the NORABench dataset
+    # 1. read in the ASTABench dataset
     try:
         with open(dataset_path, 'r') as csvfile:
             reader = csv.DictReader(csvfile) 

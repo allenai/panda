@@ -1,16 +1,10 @@
-
 """
-How to use this:
-# 1. start panda 
-import panda
-# 2. load in the demo example
-%run panda/panda_agent/iterpanda_demo
-# 3. Run it!
-panda.run_iterpanda(mission_json=TUNER_MISSION_JSON, task_json=TUNER_TASK1_JSON, results_dir="iterpanda_tuner_new3")
 
-ALSO
-%run panda/panda_agent/iterpanda_demo2
-panda.run_iterpanda(mission_json=ETHICS_MISSION_JSON, task_json=ETHICS_TASK1_JSON, results_dir="iterpanda_ethics")
+Usage:
+panda.run_iterpanda(logbook_file="logbook.md")
+where logbook.md might start:
+"# Research Mission
+ How much does an in-context fact influence model behavior?"
 
 Given a top-level Mission (and optional task):
 0. (If no task is provided, ideate a task [possibly using step 2 functions])
@@ -83,7 +77,7 @@ MAX_RETRIES = 3
 REPORT_EXT = ".txt"
 ALLOW_SHORTCUTS = False
 
-LOGFILE = "logfile.txt"
+LOGFILE = "logbook.md"
 
 MAIN_INTRO = """
 INTRODUCTION
@@ -129,7 +123,7 @@ def run_iterpanda(logbook_file=None):
     # ----------------------------------------
     os.chdir(agent_config.ROOT_DIR)			# make sure you're back at the top
     if not file_exists(logbook_file):
-        message = "ERROR! Please provide a logbook_file=.. to run_iterpanda()!"
+        message = f"ERROR! No such logbook file '{logbook_file}'!"
         print(message)
         raise ValueError(message)
     with open(logbook_file, "r", encoding="utf-8", errors='ignore') as f:

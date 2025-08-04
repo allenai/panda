@@ -3,6 +3,7 @@ import pandas as pd
 
 from .ask_llm import call_llm, call_llm_json, call_llm_multiple_choice
 from . import config		# for DEFAULT_GPT4_MODEL
+from panda.panda_agent import config as agent_config
 
 LIST_BATCH_SIZE = 10
 
@@ -23,7 +24,7 @@ Example:
     print(llm_list("Tell me some countries."))
  -> ['China', 'India', 'United States', 'Indonesia', 'Pakistan']
 """
-def llm_list(prompt:str, temperature=0, quiet=True, n=None, model=config.DEFAULT_GPT4_MODEL):
+def llm_list(prompt:str, temperature=0, quiet=True, n=None, model=agent_config.PANDA_LLM):
     element_json = f'{{"number":INTEGER, "item":ITEM}}'
     response = llm_list_json(prompt, element_json, temperature=temperature, quiet=quiet, n=n, model=model)
     result = []
@@ -57,7 +58,7 @@ Example (no number of items provided):
      {'name': 'William Shakespeare'}]
 
 """
-def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, model=config.DEFAULT_GPT4_MODEL):
+def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, model=agent_config.PANDA_LLM):
 #   print("DEBUG: n=", n, "prompt =", prompt)
     if not n:
         n_json,_ = call_llm_json(f'The following request asks for a number of items. Return JUST that number, as an integer, in the JSON format {{"n":INTEGER}}. If you can\'t find the number, return the integer 0. Here is the request: "{prompt}"')
@@ -119,7 +120,7 @@ def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, 
 ### ----------------------------------------------------------------------
 
 """
-def map_dataframe(dataframe:pd.DataFrame, prompt_template:str, output_col:str, model='gpt4'):
+def map_dataframe(dataframe:pd.DataFrame, prompt_template:str, output_col:str, model=agent_config.PANDA_LLM):
 Purpose:
     For every row in dataframe, query the model with the instantiated prompt_template, and put answers in the DataFrame column called output_col.
 Args:
@@ -131,15 +132,15 @@ Returns:
     DataFrame: The input dataframe updated with the answers. (Note: the input dataframe is destructively updated)
 Example:
     x = pd.DataFrame([{'question':'What is 1 + 1?'}, {'question':'What is 2 + 2?'}])
-    map_dataframe(x, "Answer this question: {question}", 'answer', model='olmo')      # x is destructively updated
+    map_dataframe(x, "Answer this question: {question}", 'answer', model='llama')      # x is destructively updated
     print(x)
              question answer
     0  What is 1 + 1?      2
     1  What is 2 + 2?      4
 
-[1] Can't have this function call map_dataframe_json internally as we need to allow non-JSON answers from model='olmo'
+[1] Can't have this function call map_dataframe_json internally as we need to allow non-JSON answers from model='llama'
 """
-def map_dataframe(dataframe:pd.DataFrame, prompt_template:str, output_col:str, model='gpt4', quiet=True):
+def map_dataframe(dataframe:pd.DataFrame, prompt_template:str, output_col:str, model=agent_config.PANDA_LLM, quiet=True):
 
     responses = []
     for row_dict in dataframe.to_dict('records'):
@@ -156,7 +157,7 @@ def map_dataframe(dataframe:pd.DataFrame, prompt_template:str, output_col:str, m
 ### ----------------------------------------------------------------------
 
 """
-def map_datafram_multiple_choice(dataframe:pd.DataFrame, prompt_template:str, options, output_col:str, model='gpt4'):
+def map_datafram_multiple_choice(dataframe:pd.DataFrame, prompt_template:str, options, output_col:str, model=agent_config.PANDA_LLM):
 Purpose:
     Same as map_dataframe, except the responses are constained to be one of options.
     For every row in dataframe, query the model with the instantiated prompt_template, and put answers in the DataFrame column called output_col.
@@ -171,15 +172,15 @@ Returns:
 Notes:
 Example:
     x = pd.DataFrame([{'question':'Is water wet?'}, {'question':'Can birds fly?'}])
-    map_dataframe_multiple_choice(x, "Answer this question: {question}", ["yes","no"], 'answer', model='olmo')      # x is destructively updated
+    map_dataframe_multiple_choice(x, "Answer this question: {question}", ["yes","no"], 'answer', model='llama')      # x is destructively updated
     print(x)
              question answer
     0  What is 1 + 1?      2
     1  What is 2 + 2?      4
 
-[1] Can't have this function call map_dataframe_json internally as we need to allow non-JSON answers from model='olmo'
+[1] Can't have this function call map_dataframe_json internally as we need to allow non-JSON answers from model='llama'
 """
-def map_dataframe_multiple_choice(dataframe:pd.DataFrame, prompt_template:str, options, output_col:str, model='gpt4', quiet=True):
+def map_dataframe_multiple_choice(dataframe:pd.DataFrame, prompt_template:str, options, output_col:str, model=agent_config.PANDA_LLM, quiet=True):
 
     responses = []
     for row_dict in dataframe.to_dict('records'):
@@ -215,7 +216,7 @@ print(dataset.to_csv(sep='\t'))
 0	What is the sum of 34 and 21?	The sum of 34 and 21 is 55.	10	The answer provided is completely correct. The sum of 34 and 21 is indeed 55.
 1	Add 58 and 36 together.	Add 58 and 36: 94.	10	The answer provided is completely correct. When you add 58 and 36 together, the sum is indeed 94.
 """
-def map_dataframe_json(dataframe:pd.DataFrame, prompt_template:str, json_template:str, quiet=True, model='gpt4'):
+def map_dataframe_json(dataframe:pd.DataFrame, prompt_template:str, json_template:str, quiet=True, model=agent_config.PANDA_LLM):
     prompt_extra = f"\nReturn your answer as a JSON object with the following structure: {json_template}"            
     responses = []
     for row_dict in dataframe.to_dict('records'):

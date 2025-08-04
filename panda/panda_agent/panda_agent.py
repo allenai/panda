@@ -4,7 +4,6 @@ USAGE:
 %load_ext autoreload
 %autoreload 2 
 import panda
-
 panda.run_panda()				# interactive
 panda.run_panda(task="How good is Llama at 2-digit addition?",allow_shortcuts=True)    # batch run
 
@@ -111,10 +110,10 @@ USE_ADVICE = False
 
 # Last step in a partial plan
 LAST_PARTIAL_PLAN_STEP = "Plan what to do next"
-TEST_TASKS = ["How good is OLMo at 2-digit addition, e.g., '23 + 43 = ?'", \
-              "How well can OLMo translate into different languages?", \
-              "Is Olmo or Llama better at telling jokes?", \
-              "How well correlated are OLMo's and Llama's abilities at math?"]
+TEST_TASKS = ["How good is Llama at 2-digit addition, e.g., '23 + 43 = ?'", \
+              "How well can Llama translate into different languages?", \
+              "Is Claude or Llama better at telling jokes?", \
+              "How well correlated are Llama's and Llama's abilities at math?"]
 
 # "unit tests" - These are examples in the prompt, so better be able to do these at least!
 def test_panda():
@@ -506,7 +505,8 @@ def panda_step0(mode, planinfo, state, planstack, model=agent_config.PANDA_LLM):
 
     # ========================================
     #     THE MAIN AGENT CALL TO THE LLM
-    # ========================================        
+    # ========================================
+#   print("DEBUG: Calling LLM model", model)
     response_json, response_str = call_llm_json(my_globals.dialog_so_far, temperature=temperature, model=model) # <- ask GPT for its reply...
     my_globals.dialog_so_far.append(response_str)    					# <- add GPT's reply to the dialog so far...
 
