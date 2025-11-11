@@ -14,17 +14,18 @@ For an example output report and trace, see the /output directory. The .html fil
 2. Create a new conda environment for panda:
 
 ```
-cd panda
-conda create -n panda
-conda activate panda
-conda install pip
-pip install -e .
+% git clone https://github.com/allenai/panda.git
+% cd panda
+% conda create -n panda
+% conda activate panda
+(panda) % conda install pip                  # if not installed
+(panda) % pip install -e .
 ```
 then...
 
 3.1 Run from command line:
 ```
-% conda activate panda
+% conda activate panda                       # if not already in panda environment
 (panda) % python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
 ```
 With optional arguments:
@@ -35,7 +36,7 @@ With optional arguments:
 3.2 OR Run from iPython interactively
 To run, go the top-level panda directory, then start ipython:
 ```
-% conda activate panda
+% conda activate panda                       # if not already in panda environment
 (panda) % ls
 README.md     panda/     setup.py      LICENCE      VERSION     (etc)
 (panda) % ipython
