@@ -1,4 +1,4 @@
-# Panda v1.4.9
+# Panda v1.4.10
 
 # Overview
 
@@ -11,7 +11,7 @@ For an example output report and trace, see the /output directory. The .html fil
 ## Instructions
 
 1. Make sure you have your OpenAI key set in the environment variable OPENAI\_API\_KEY. Optional: If you also want to use Mistral/LLama, also set TOGETHER\_API\_KEY. If you want to use Claude, also set ANTHROPIC\_API\_KEY.
-2. Create a new environment, and then do:
+2. Create a new conda environment for panda:
 
 ```
 cd panda
@@ -20,6 +20,7 @@ conda activate panda
 conda install pip
 pip install -e .
 ```
+then...
 
 3.1 Run from command line:
 ```
@@ -58,7 +59,7 @@ In [5]: print(result)
 ```
 Notes:
  * A result of "done" indicates the research was successful, anything else and it failed.
- * "force_report=True" *forces* Panda to produce a report (if the research was successful).
+ * "force_report=True" *forces* Panda to produce a report (even if the research was unsuccessful).
  * The report_filestem shows where the .html and .txt reports are, as well as the -trace.txt and -trace-long.txt log files.
  * The summary is a short GPT-generated summary for the user.
 
