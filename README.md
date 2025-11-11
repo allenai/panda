@@ -21,7 +21,7 @@ conda install pip
 pip install -e .
 ```
 
-3.1 Run from comamand line:
+3.1 Run from command line:
 ```
 % conda activate panda
 (panda) % python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
