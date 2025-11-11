@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "panda": {
+      "command": "python",
+      "args": ["-m", "panda.mcp_server"],
+      "env": {
+        "AGENT_MODE": "async",
+        "LOG_LEVEL": "info"
+        "PYTHONPATH": "C:\\Users\\peter\\Dropbox\\Desktop\\2025\\panda"	  
+      }
+    }
+  }
+}
