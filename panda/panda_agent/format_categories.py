@@ -126,7 +126,6 @@ def categories_table_only(categories, cat_score_col:str='score', cat_adj_score_c
 # for _, category in categories[categories['CID'] != 0].iterrows():
   for CID, category in categories.drop(0).iterrows():		# drop index 0 row
 #   CID = category['CID']
-#   print("DEBUG: CID =", CID)
     title = category[cat_title_col]
     description = category[cat_description_col]
     n_covered = category['n_covered']

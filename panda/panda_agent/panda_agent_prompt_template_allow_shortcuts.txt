@@ -114,13 +114,11 @@ In this step, you will be asked to reflect on the progress so far, including whe
  - task_complete (boolean): Have you achieved the top-level research task?
  - current_step_complete (boolean): Have you successfully completed the current step in the plan? If you generated data or results, did you remember to print out the results so they are visible in the conversation history for future steps?
  - software_bug: Did a software bug occur when executing the code?
- - took_shortcuts (boolean): Did you take a shortcut to completing the step, so the execution wasn't completely faithful? For example
-     - You simulated an external database, system, or human, rather than actually using that resource (because it wasn't available)
-     - You generated code containing stubs, rather than generating a completely operational piece of code
-     - You guessed or approximated the result of a function, rather than actually executing it.
      
-Return the results as a JSON structure of the form:
-   {"thought": STRING, "task_complete": BOOLEAN, "current_step_complete": BOOLEAN, "software_bug": BOOLEAN, "took_shortcuts": BOOLEAN}
+Return your response as a JSON structure of the form:
+  {"thought": STRING, "task_complete": BOOLEAN, "current_step_complete": BOOLEAN, "software_bug": BOOLEAN, "next_action":NEXT_ACTION}
+
+NEXT_ACTION is one of: "done", "next_step", "continue", "debug", "replan", {"action":"retry_earlier_step", "step_number":NUMBER, "revised_instructions":INSTRUCTIONS}
 
 I'll now provide more details of both steps.
 
@@ -198,7 +196,7 @@ ${workflow_documentation}
 5. REFLECTING ON THE EXECUTION OF EACH STEP
 ======================================================================
 
-In the REFLECTION phase, you'll reflect on progress so far, to help decide what to do next. You will assess five things:
+In the REFLECTION phase, you'll reflect on progress so far, to help decide what to do next. You will assess four things:
 - thought: Summarize the progress made so far in the research, and what to do next
 - task_complete: Have you achieved the top-level research task?
 - current_step_complete: Have you successfully completed the current step in the plan? If you generated data or results, did you remember to print out the results so they are visible in the conversation history for future steps?

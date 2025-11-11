@@ -1,10 +1,12 @@
 
+import sys
 import pandas as pd
 from string import Template
 
-from panda.utils import call_llm_json
+from panda.utils import call_llm_json, logger
+from . import config
 
-MAX_ITEMS_TO_CATEGORIZE = 30
+# MAX_ITEMS_TO_CATEGORIZE = 30
 
 ### ======================================================================
 ###	GENERAL VERSION OF CATEGORIZE_QUESTIONS
@@ -40,24 +42,23 @@ Example:
 """
 def place_items_in_categories(dataset:pd.DataFrame, categories:pd.DataFrame, item_col:str='question', data_cat_col:str='categories',
                               cat_title_col:str='title', cat_description_col:str='description', quiet=True):
-#    print(dataset.to_csv(sep='\t'))
-#    print(categories.to_csv(sep='\t'))    
     if data_cat_col not in dataset.columns:    # Make sure a data_cat_col column exists
         dataset[data_cat_col] = [[] for _ in range(len(dataset))]  # Initialize with empty list for each row        
 
-    if len(dataset) > MAX_ITEMS_TO_CATEGORIZE:
-        print(f"[ Debug: More than {MAX_ITEMS_TO_CATEGORIZE} items ({len(dataset)}) in dataset - just categorizing a sample of {MAX_ITEMS_TO_CATEGORIZE}... ]")
-        sample_size = min(MAX_ITEMS_TO_CATEGORIZE,len(dataset))
+    if len(dataset) > config.MAX_ITEMS_TO_CATEGORIZE:
+        logger.info(f"[ Debug: More than {config.MAX_ITEMS_TO_CATEGORIZE} items ({len(dataset)}) in dataset - just categorizing a sample of {config.MAX_ITEMS_TO_CATEGORIZE}... ]")
+        sample_size = min(config.MAX_ITEMS_TO_CATEGORIZE,len(dataset))
         dataset_sample = dataset.sample(n=sample_size, random_state=42) 
     else:
         dataset_sample = dataset
     for index, row in dataset_sample.iterrows():
-        print(index, end="")        
+        print(index, end="", file=sys.stderr)        
         question = row[item_col]
         existing_categories = row[data_cat_col]
 
         for cat_index, cat_row in categories.iterrows():
-            print(".", end="")
+#           print(".", end="", file=sys.stderr)
+            logger.info(".")			       # will normally go exec() hence through LoggerTee in panda_agent.py, which suppresses newline...
             title = cat_row[cat_title_col]
             description = cat_row[cat_description_col]
 
@@ -98,12 +99,12 @@ def is_in_category(statement:str, cat_title:str, cat_description:str, quiet=True
         STATEMENT = statement)
     answer, answer_str = call_llm_json(prompt)
     if not quiet:
-        print("DEBUG: is_in_category: answer =", answer)
+        logger.info("DEBUG: is_in_category: answer = %s", answer)
     score = answer['score']
 
     if not quiet:
-        print(f"-> is_in_category(\"{statement}\", \"{cat_title}\", \"{cat_description}\")")
-        print(f"<- {score}")
+        logger.info(f"-> is_in_category(\"{statement}\", \"{cat_title}\", \"{cat_description}\")")
+        logger.info(f"<- {score}")
 
     if score == "?":
         return 0.5
@@ -111,7 +112,7 @@ def is_in_category(statement:str, cat_title:str, cat_description:str, quiet=True
         try:
             return float(score) / 10
         except ValueError:
-            print("Invalid input: Answer must be a number or '?'")
+            logger.info("Invalid input: Answer must be a number or '?'")
             return None  # Or handle the error differently, e.g., raise an exception    
         
 ### ----------------------------------------------------------------------

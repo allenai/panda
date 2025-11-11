@@ -103,9 +103,7 @@ def add_signal(categories, cat_score_col:str=None, cat_adj_score_col:str=None, c
             return adjusted_score, adjusted_signal
 
     categories[[cat_adj_score_col, cat_signal_col]] = categories.apply(calculate_signal, axis=1, result_type='expand')
-#   print("DEBUG: categories['signal'] =", categories['signal'])
     categories = categories[(categories['signal'] > 0.000001) | (categories.index == 0)]   # remove rows with a zero or negative signal (but keep "everything" row 0)
-#   print("DEBUG: new categories table =", categories)
     return categories  
 
 

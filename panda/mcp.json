@@ -1,13 +1,9 @@
+// Linking Cursor to Panda: Delete this [illegal] comment line, update the paths to Panda below and in panda/run_panda.bat, and copy this file to ~/.cursor/mcp.json
 {
   "mcpServers": {
     "panda": {
-      "command": "python",
-      "args": ["-m", "panda.mcp_server"],
-      "env": {
-        "AGENT_MODE": "async",
-        "LOG_LEVEL": "info"
-        "PYTHONPATH": "C:\\Users\\peter\\Dropbox\\Desktop\\2025\\panda"	  
-      }
+	"command": "C:\\Users\\peter\\Dropbox\\Desktop\\2025\\Panda\\panda\\run_panda.bat",
+      "args": []
     }
   }
 }

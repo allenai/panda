@@ -1,20 +1,22 @@
 
+import sys
 import pandas as pd
 
 from .ask_llm import call_llm, call_llm_json, call_llm_multiple_choice
 from . import config		# for DEFAULT_GPT4_MODEL
 from panda.panda_agent import config as agent_config
+from .logger import logger
 
 LIST_BATCH_SIZE = 10
 
-config.doc['llm_list'] = """
+config.doc['llm_list'] = f"""
 def llm_list(prompt:str, model:str):
 Purpose:
     Get a list of string answers from an LLM in a single call. This function queries the LLM with the prompt, extracts a list of answers, and returns them as a list.
 Args:
     prompt (str): The prompt to be sent to GPT. The prompt should specify the number of items to return. 
                   It is good practice to include an example of the item to return in the prompt.
-    model (str): The LLM to call. Currently must be one of 'gpt4' or 'o1-mini'.
+    model (str): The JSON-capable LLM to call. Currently must be one of {config.JSON_CAPABLE_MODEL_NAMES}
 Returns:
     list: A list of items (strings)
 Example:
@@ -32,7 +34,7 @@ def llm_list(prompt:str, temperature=0, quiet=True, n=None, model=agent_config.P
         try:
             result.append(item_data['item'])
         except KeyError:
-            print(f"WARNING! llm_list: No pair with key 'item' found in dict element {item_data}....Ignoring it and continuing...")
+            logger.warning(f"WARNING! llm_list: No pair with key 'item' found in dict element {item_data}....Ignoring it and continuing...")
     return result            
 
 ### ----------
@@ -44,27 +46,26 @@ Purpose:
 Args:
     prompt (str): The prompt to be sent to GPT. The prompt should specify the number of items required.
     json_template (str): The template JSON to return for each answer
-    model (str): The LLM to call. Currently must be one of 'gpt4' or 'o1-mini'.
+    model (str): The JSON-capable LLM to call. Currently must be one of {config.JSON_CAPABLE_MODEL_NAMES}
 Returns:
     JSON array: A list of JSON objects, formatted following the json_template template.
 Example:
-    print(llm_list_json("Give me two famous names", '{"first_name",FIRST_NAME, "surname":SURNAME}'))
- -> [{'first_name': 'Albert', 'surname': 'Einstein'}, {'first_name': 'Marie', 'surname': 'Curie'}]
+    print(llm_list_json("Give me two famous names", '{{"first_name",FIRST_NAME, "surname":SURNAME}}'))
+ -> [{{'first_name': 'Albert', 'surname': 'Einstein'}}, {{'first_name': 'Marie', 'surname': 'Curie'}}]
 Example (no number of items provided):
-    print(llm_list_json("List some famous people", '{"name":NAME}'))         
- -> [{'name': 'Albert Einstein'},
-     {'name': 'Marie Curie'},
-     {'name': 'Martin Luther King Jr.'},
-     {'name': 'William Shakespeare'}]
+    print(llm_list_json("List some famous people", '{{"name":NAME}}'))         
+ -> [{{'name': 'Albert Einstein'}},
+     {{'name': 'Marie Curie'}},
+     {{'name': 'Martin Luther King Jr.'}},
+     {{'name': 'William Shakespeare'}}]
 
 """
 def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, model=agent_config.PANDA_LLM):
-#   print("DEBUG: n=", n, "prompt =", prompt)
     if not n:
         n_json,_ = call_llm_json(f'The following request asks for a number of items. Return JUST that number, as an integer, in the JSON format {{"n":INTEGER}}. If you can\'t find the number, return the integer 0. Here is the request: "{prompt}"')
         n = n_json['n']
         if n != 0:			# note you can just ask for "some" items
-            print(f"DEBUG: Found that {n} items are requested...")
+            logger.info(f"DEBUG: Found that {n} items are requested...")
     struct_prompt = f'\nReturn your answer as a compact JSON object, formatted as a single line with no unnecessary spaces or newlines, in the following structure:\n   {{"answer": [{json_template}, {json_template}, ...]}}'
     if n > LIST_BATCH_SIZE:
         full_prompt = prompt + f"\nTo make this manageable, let's generate the items in batches of {LIST_BATCH_SIZE}." + struct_prompt + f"\nGo ahead and generate the first {LIST_BATCH_SIZE} items."
@@ -74,17 +75,17 @@ def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, 
     dialog = []
     dialog += [full_prompt]
     if not quiet:
-        print("SYSTEM: ", full_prompt)
-#   print("dialog =", dialog)
+        logger.info("SYSTEM: %s", full_prompt)
+#   logger.info("dialog = %s", dialog)
     response, response_str = call_llm_json(dialog, temperature=temperature)
     if not quiet:
-        print("GPT: ", response_str)
+        logger.info("GPT: %s", response_str)
     dialog += [response_str]
 
     try:
         item_list = response.get('answer', [])  # Get the list of questions, or an empty list if 'answer' key is not found
     except KeyError:
-        print("Yikes! No 'answer' field in result from GPT.. no values found...")
+        logger.error("Yikes! No 'answer' field in result from GPT.. no values found...")
         ite_list = []  # Handle the case where the 'answer' key is not found
 
     remaining = n - LIST_BATCH_SIZE if n else 0
@@ -95,23 +96,22 @@ def llm_list_json(prompt, json_template:str, temperature=0, quiet=True, n=None, 
             another = "another" if remaining > LIST_BATCH_SIZE else "the last"
             prompt = f"Now generate {another} {next_batch_size} items."
             dialog += [prompt]
-#           print("dialog =", dialog)
             if not quiet:
-                print("SYSTEM: ", prompt)
+                logger.info("SYSTEM: %s", prompt)
             response, response_str = call_llm_json(dialog, temperature=temperature)
             if not quiet:
-                print("GPT: ", response_str)
+                logger.info("GPT: %s", response_str)
             dialog += [response_str]
             batch_items = response.get('answer', [])
             if not batch_items: # Handle empty responses within a batch
-                print("Warning: GPT returned an empty 'answer' list in a batch. Retrying the batch...")
+                logger.warning("Warning: GPT returned an empty 'answer' list in a batch. Retrying the batch...")
                 continue # Retry the current batch
             item_list.extend(batch_items)
             remaining -= len(batch_items) # Decrement remaining by the actual number of received items
 
         except (json.JSONDecodeError, KeyError, AttributeError) as e: # Catch JSON errors and other potential errors
-            print(f"Error processing GPT response: {e}.  Response was: {response_str}")  # Print response string for debugging
-            print("Yikes! Issues with JSON or 'answer' field...returning accumulated values so far...")
+            logger.warning(f"Error processing GPT response: {e}.  Response was: {response_str}")  # Print response string for debugging
+            logger.warning("Yikes! Issues with JSON or 'answer' field...returning accumulated values so far...")
             return item_list # Return what we have so far, even if incomplete
             # Consider: break here instead of return if you want to stop completely on errors
 
@@ -127,12 +127,12 @@ Args:
     dataframe (DataFrame): input data
     prompt_template (str): The template prompt to query model with
     output_col (str): The DataFrame column to place the answers in
-    model (str): The LLM to call. Currently must be one of 'gpt4' or 'o1-mini'.
+    model (str): The JSON-capable LLM to call. Currently must be one of {config.JSON_CAPABLE_MODEL_NAMES}
 Returns:
     DataFrame: The input dataframe updated with the answers. (Note: the input dataframe is destructively updated)
 Example:
-    x = pd.DataFrame([{'question':'What is 1 + 1?'}, {'question':'What is 2 + 2?'}])
-    map_dataframe(x, "Answer this question: {question}", 'answer', model='llama')      # x is destructively updated
+    x = pd.DataFrame([{{'question':'What is 1 + 1?'}}, {{'question':'What is 2 + 2?'}}])
+    map_dataframe(x, "Answer this question: {{question}}", 'answer', model='llama')      # x is destructively updated
     print(x)
              question answer
     0  What is 1 + 1?      2
@@ -265,7 +265,7 @@ print(updated_x)
 """
 
 def print_progress():
-    print(".", end="")	
+    print(".", end="", file=sys.stderr)
 #   print_to_user(".", end="")		# urgh, circular import - need to fix
 
     

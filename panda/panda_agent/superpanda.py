@@ -115,7 +115,7 @@ from string import Template		# for write_report()
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from panda.utils import call_llm, call_llm_json, read_file_contents, jprint, extract_html_from_string, clear_directory, copy_file, build_gpt_response_format
+from panda.utils import call_llm, call_llm_json, read_file_contents, jprint, extract_html_from_string, clear_directory, copy_file, build_gpt_response_format, logger
 from panda.researchworld.lit_ideation import ideate_tasks_for_topic, ideate_tasks_from_papers
 from . import config as agent_config
 from . import my_globals         # so run_simulated_experiment can (fake) set my_globals.print_so_far
@@ -156,10 +156,10 @@ def go():
     while True:
         topic = random.choice(TOPICS_OF_INTEREST)
         now = datetime.datetime.now()
-        print(f"======================================================================")
-        print(f"{now.hour}:{now.minute} {now.month}/{now.day}/{now.year}")
-        print("TOPIC:", topic)
-        print(f"======================================================================")
+        logger.info(f"======================================================================")
+        logger.info(f"{now.hour}:{now.minute} {now.month}/{now.day}/{now.year}")
+        logger.info("TOPIC:", topic)
+        logger.info(f"======================================================================")
         first_word = get_first_word(topic)
         timestamp = f"{now.month}-{now.day}-{now.year}_{now.hour}.{now.minute}"
         results_dir = first_word + "-" + timestamp
@@ -191,7 +191,7 @@ run_superpanda() should be given exactly ONE of task, tasks, topic, or a report 
 def run_superpanda(task=None, task_jsons=None, topic=None, report=None, guidance=DEFAULT_GUIDANCE, results_dir=None):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to run_superpanda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
     
     # Check for exactly ONE input argument
@@ -229,18 +229,18 @@ def run_superpanda(task=None, task_jsons=None, topic=None, report=None, guidance
             raise ValueError("ERROR! run_superpanda(report={...}) - report should include {'report_pathstem':...}) as a minimum requirement!")
         
         if not report.get('report_summary') or not report.get('task'):		# if task and/or report_summary missing, regenerate it
-            print("Summarizing report...")
+            logger.info("Summarizing report...")
             report_pathstem = report['report_pathstem']
             report_text = read_file_contents(report_pathstem + REPORT_EXT)
             if not report.get('report_summary'):
                 prompt = "Generate one or two sentences that briefly summarize the conclusions of the following research paper:\n\n" + report_text
                 report_summary = call_llm(prompt, model=agent_config.SUPERPANDA_LLM)
-                print("Report summary (inferred):", report_summary)
+                logger.info("Report summary (inferred): %s", report_summary)
                 report['report_summary'] = report_summary
             if not report.get('task'):
                 prompt = "Summarize the task (research question) that this report seeks to answer in one or two sentences:\n\n" + report_text
                 task = call_llm(prompt, model=agent_config.SUPERPANDA_LLM)
-                print("Report task (inferred):", task)
+                logger.info("Report task (inferred): %s", task)
                 report['task'] = task                
 
         initial_agenda_item = report				# {'task':..., 'report_pathstem':...}
@@ -264,7 +264,7 @@ def run_superpanda(task=None, task_jsons=None, topic=None, report=None, guidance
 def restart_superpanda(results_dir=None):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to restart_superpanda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
 
     agenda = get_agenda(results_dir=results_dir)
@@ -276,7 +276,7 @@ def restart_superpanda(results_dir=None):
 def get_agenda(results_dir=None):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to get_agenda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
 
     agenda_filepath = os.path.join(results_dir, "agenda.json")    
@@ -290,7 +290,7 @@ def get_agenda(results_dir=None):
 def do_agenda(agenda, save_agenda=True, results_dir=None):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to do_agenda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
 
     score_agenda_items(agenda)                # updates overall_score:... for each agent_item
@@ -306,7 +306,7 @@ def do_agenda(agenda, save_agenda=True, results_dir=None):
 
     top_agenda_item = agenda[0]
     if completed_agenda_item(top_agenda_item, agenda):		# if the top-scoring agenda item is complete, nothing else can better it (scores only go down) so stop!
-        print("Found the optimal result!")
+        logger.info("Found the optimal result!")
         return agenda
     
     next_agenda_item = get_next_agenda_item(agenda)		# first *not done* agenda item
@@ -317,7 +317,7 @@ def do_agenda(agenda, save_agenda=True, results_dir=None):
         new_agenda = agenda + new_agenda_items
         return do_agenda(new_agenda, results_dir=results_dir)
     else:    
-        print("Everything done on the agenda! (But no completed results :( )")
+        logger.info("Everything done on the agenda! (But no completed results :( )")
         return agenda
 
 # ----------
@@ -389,10 +389,10 @@ def completed_agenda_item(agenda_item, agenda):
 # returns a LIST of new_agenda_items
 def do_agenda_item(agenda_item, results_dir=None):
 
-    print("======================================================================")
-    print("NEXT AGENDA ITEM:", agenda_item['next_step'])
-    print(pretty_format_dict({k:v for k,v in agenda_item.items() if k != 'dialog'}))
-    print("======================================================================")
+    logger.info("======================================================================")
+    logger.info("NEXT AGENDA ITEM: %s", agenda_item['next_step'])
+    logger.info(pretty_format_dict({k:v for k,v in agenda_item.items() if k != 'dialog'}))
+    logger.info("======================================================================")
     
     dialog = agenda_item['dialog']
     next_step = agenda_item['next_step']
@@ -454,8 +454,8 @@ def do_agenda_item(agenda_item, results_dir=None):
         mechanism = agenda_item['mechanism']
         test = agenda_item['test']          # {'title':..., 'description':..., 'key_measurements':..., 'expected_results_if_true':..., 'expected_results_if_false':...}
         result, test_report_pathstem, test_report_summary = perform_test(task, report, finding, mechanism, test, results_dir=results_dir)   # -> "done", <report-pathstem>
-        print("DEBUG: result =", result)
-        print("DEBUG: test_report_pathstem = ", test_report_pathstem)
+        logger.debug("DEBUG: result =", result)
+        logger.debug("DEBUG: test_report_pathstem = ", test_report_pathstem)
         if result == "done":
             secondary_paper = read_file_contents(test_report_pathstem + REPORT_EXT)
             confirmation = assess_conjecture(task, finding, mechanism, test, secondary_paper)   # -> {"score":7,"explanation":EXP}  (score is -10 to 10)
@@ -469,11 +469,11 @@ def do_agenda_item(agenda_item, results_dir=None):
         return new_agenda_items
 
     elif next_step == "done":
-        print(f"ERROR! Trying to do an agenda item that's already done!\n{agenda_item}")
+        logger.error(f"ERROR! Trying to do an agenda item that's already done!\n{agenda_item}")
         raise ValueError(f"ERROR! Trying to do an agenda item that's already done!\n{agenda_item}")
 
     else:
-        print(f"ERROR! Unrecognized next_step {next_step}!")
+        logger.error(f"ERROR! Unrecognized next_step {next_step}!")
 
 ### ======================================================================
 ###               MAIN INTERFACE FOR RUNNING EXPERIMENTS
@@ -482,7 +482,7 @@ def do_agenda_item(agenda_item, results_dir=None):
 def run_experiment(task, plan=None, background_knowledge=None, reset_namespace=True, results_dir=None, allow_shortcuts=False):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to run_experiment()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
 
     if SIMULATE_EXPERIMENTS:
@@ -504,12 +504,12 @@ Try to make the report, including its findings, as realistic as possible.
 Write your report in plain text format.'''
     simulator_model = 'gpt4'
     my_globals.print_so_far = "==================== SuperPanda ====================\n" + prompt
-    print(my_globals.print_so_far)
+    logger.info(my_globals.print_so_far)
     report_text = call_llm(background_knowledge_text + prompt, model=simulator_model)		# note background_knowledge_text is used, but not recorded in the history
 
     # fake print_so_far
     result_text = f"\n====================  {simulator_model} ====================\n" + report_text
-    print(result_text)
+    logger.info(result_text)
     my_globals.print_so_far += result_text
     
     timestamp = datetime.datetime.now().strftime("%m-%d-%Y_%H.%M.%S.%f")		# need to include microseconds (%f) to avoid name collisions!
@@ -526,8 +526,8 @@ Write your report in plain text format.'''
 
 def run_real_experiment(task, plan=None, background_knowledge=None, results_dir=None, reset_namespace=True, allow_shortcuts=False):
     from .panda_agent import run_panda	# delayed import, to avoid circularity
-    result, report_pathstem, report_summary, token_counts = run_panda(task, plan=plan, background_knowledge=background_knowledge, reset_namespace=reset_namespace, force_report=True, allow_shortcuts=allow_shortcuts)
-
+    result = run_panda(task, plan=plan, background_knowledge=background_knowledge, reset_namespace=reset_namespace, force_report=True, allow_shortcuts=allow_shortcuts)
+    result_flag, report_pathstem, report_summary, token_counts = result["result_flag"], result["report_pathstem"], result["summary"], result["token_counts"]
     # Copy the Panda report (if any) into results_dir
     if report_pathstem:
         report_filestem = os.path.basename(report_pathstem)			      # "/users/pete/foo" -> "foo"
@@ -535,7 +535,7 @@ def run_real_experiment(task, plan=None, background_knowledge=None, results_dir=
         copy_file(report_pathstem+REPORT_EXT, report_pathstem_superpanda+REPORT_EXT)   # Copy report into results_dir
     else:
         report_pathstem_superpanda = None
-    return result, report_pathstem_superpanda, report_summary
+    return result_flag, report_pathstem_superpanda, report_summary
 
 ### ======================================================================
 ###                1. FIND FAILURE CATEGORIES (FINDINGS)
@@ -576,7 +576,7 @@ Go ahead!"""
     dialog.append(categories_str)
 
     failure_categories = categories_json['findings']
-    print("failure_categories = ", failure_categories)
+    logger.info("failure_categories = %s", failure_categories)
     return failure_categories
 
 # Define JSON response structure for {"findings": [{"title":TITLE, "description":DESCRIPTION, "score":SCORE}, {...},...]}
@@ -614,9 +614,7 @@ to 10 (very confident).
     conjectures_json, conjectures_str  = call_llm_json(dialog, response_format=Conjectures, model=agent_config.SUPERPANDA_LLM)
     dialog.append(conjectures_str)
     conjectured_mechanisms = conjectures_json['conjectures']
-#   print("conjectured_mechanisms =", conjectured_mechanisms)
-#   input(f"Mechanisms ({len(conjectured_mechanisms)}) pause....")
-    print(len(conjectured_mechanisms), "mechanisms found...")
+    logger.info(f"{len(conjectured_mechanisms)} mechanisms found...")
     return conjectured_mechanisms
 
 # Define JSON response structure for {"conjectures": [{"title":TITLE, "description":MECHANISM, "score":SCORE}, ...]}
@@ -664,8 +662,8 @@ i.e., {"tests": []}
     dialog.append(tests_str)
 
     mechanism_tests = tests_json['tests']
-    print("mechanism_tests =", mechanism_tests)
-    print(len(mechanism_tests), "tests found...")    
+    logger.info("mechanism_tests = %s", mechanism_tests)
+    logger.info(f"{len(mechanism_tests)} tests found...")    
     return mechanism_tests
 
 # Define JSON response structure for {"tests": [{"title":<string>, "description":<string>, "key_measurements":<string>, "expected_results_if_true":<string>, "expected_results_if_false":<string>},..]}
@@ -686,7 +684,7 @@ class Tests(BaseModel):
 def perform_test(task, paper, finding, mechanism, test, results_dir=None):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to run_superpanda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
     
     background_knowledge = f"""
@@ -731,7 +729,7 @@ def pretty_format_dict(data):
         return "\n".join(lines)
     except Exception as e:
         message = f"pretty_format_dict(): Exception {e}. Input data was:\n{repr(data)}"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
 
 # ======================================================================
@@ -781,12 +779,12 @@ where CONFORMATION is one of these 9 values:
 "strongly_confirms", "confirms", "mildly_confirms", "hints_at_confirms", "incluclusive", "hints_at_refutes", "mildly_refutes", "refutes", "strongly_refutes"
 """
     confirmation_json, confirmation_str = call_llm_json(prompt, response_format=Confirmation, model=agent_config.SUPERPANDA_LLM)
-    print("confirmation_json =", confirmation_json)    
+    logger.info("confirmation_json = %s", confirmation_json)    
     confirmation = confirmation_json['confirmation']
     explanation = confirmation_json['explanation']
     conf_score = CONFIRMATION_SCORES.get(confirmation)
     if conf_score is None:
-        print(f"ERROR! No confirmation value found in assess_conjecture response below. Assuming 0.\n{confirmation_str}")
+        logger.warning(f"ERROR! No confirmation value found in assess_conjecture response below. Assuming 0.\n{confirmation_str}")
         conf_score = 0
     return {"score":conf_score, "explanation":explanation}
 
@@ -834,13 +832,13 @@ CONFIRMATION_SCORES = {
 def show_agenda(agenda, results_dir=None, save_agenda=True):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to show_agenda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)
     
     agenda_htmlpath = os.path.join(results_dir, "agenda.html")
     html_agenda = "<pre>\n"
 
-    print("Agenda:")
+    logger.info("Agenda:")
     for agenda_item in agenda:
         score = agenda_item['overall_score']
         task = agenda_item['task']
@@ -865,18 +863,18 @@ def show_agenda(agenda, results_dir=None, save_agenda=True):
         confirmation_score = agenda_item.get('confirmation_score')
         mean_confirmation_score = get_mean_confirmation_score(agenda, agenda_item)
         next_step = agenda_item['next_step']
-        print(f"{score:.2f}: Task: {task}; next_step: {next_step}")
-        print(f"      Task Result: {report_result}")                        
-        print(f"      Task Report Filestem: {report_pathstem}")                
-        print(f"      Report Summmary: {report_summary}")        
-        print(f"      Finding: {finding_plus}")
-        print(f"      Mechanism: {mechanism_plus}")
-        print(f"      Test: {test_plus}")
-        print(f"      finding_score: {finding_score:.1f}; ", end="") if finding_score else None
-        print(f"mechanism_score: {mechanism_score:.1f}; ", end="") if mechanism_score else None
-        print(f"confirmation_score: {confirmation_score:.1f}; ", end="") if confirmation_score else None
-        print(f"mean_confirmation_score: {mean_confirmation_score:.2f}; ", end="") if mean_confirmation_score else None
-        print() if finding_score else None
+        logger.info(f"{score:.2f}: Task: {task}; next_step: {next_step}")
+        logger.info(f"      Task Result: {report_result}")                        
+        logger.info(f"      Task Report Filestem: {report_pathstem}")                
+        logger.info(f"      Report Summmary: {report_summary}")        
+        logger.info(f"      Finding: {finding_plus}")
+        logger.info(f"      Mechanism: {mechanism_plus}")
+        logger.info(f"      Test: {test_plus}")
+        logger.info(f"      finding_score: {finding_score:.1f}; ", end="") if finding_score else None
+        logger.info(f"mechanism_score: {mechanism_score:.1f}; ", end="") if mechanism_score else None
+        logger.info(f"confirmation_score: {confirmation_score:.1f}; ", end="") if confirmation_score else None
+        logger.info(f"mean_confirmation_score: {mean_confirmation_score:.2f}; ", end="") if mean_confirmation_score else None
+        logger.info("") if finding_score else None
         
         html_agenda += bar("", score, paren=False)
         html_agenda += "     "
@@ -903,7 +901,7 @@ def show_agenda(agenda, results_dir=None, save_agenda=True):
         html_agenda += bar(" mean ", mean_confirmation_score, DEFAULT_BAR_COLOR) if mean_confirmation_score is not None else ""
         html_agenda += "\n"
 
-    print()
+    logger.info("")
     html_agenda += "</pre>\n"
 
     for item, id in agenda_dict.items():
@@ -994,7 +992,7 @@ USAGE:
 def write_superpanda_report(agenda, results_dir=None, report_filestem="superpanda_report", timestamp=True):
     if not results_dir:
         message = "ERROR! Please provide a results_dir=.. to show_agenda()!"
-        print(message)
+        logger.error(message)
         raise ValueError(message)    
 
     # for good measure, make sure agenda is still sorted
@@ -1003,7 +1001,7 @@ def write_superpanda_report(agenda, results_dir=None, report_filestem="superpand
 
     top_agenda_item = get_top_agenda_item(agenda)
     if not top_agenda_item:
-        print("I didn't manage to do enough research to reach a conclusion (sorry)!")
+        logger.info("I didn't manage to do enough research to reach a conclusion (sorry)!")
         return
 
     task = top_agenda_item['task']
@@ -1073,7 +1071,7 @@ From further investigation, this appears to be because: {top_mechanism_plus}"""
 
 #    prompt = """Tidy up the below report, to make it a bit more fluent and fill in the items marked with square brackets [].
 #Try not to lengthen it. Your new report should also be in HTML\n\n"""
-#    print(f"Tidying up the report using {agent_config.SUPERPANDA_REPORT_WRITER_LLM}...")
+#    logger.info(f"Tidying up the report using {agent_config.SUPERPANDA_REPORT_WRITER_LLM}...")
 #    improved_html_report_str = call_llm(prompt+html_report, model=agent_config.SUPERPANDA_REPORT_WRITER_LLM)
 #    improved_html_report = extract_html_from_string(improved_html_report_str)
 
@@ -1089,11 +1087,11 @@ From further investigation, this appears to be because: {top_mechanism_plus}"""
 #    with open(html_improved_report_file, "w") as file:
 #        file.write(improved_html_report)
 
-    print("Reports written to:")
-    print(" -", html_report_file)
-#    print(" -", html_improved_report_file)
+    logger.info("Reports written to:")
+    logger.info(" - %s", html_report_file)
+#   logger.info(" - %s", html_improved_report_file)
 
-#    return html_improved_report_file
+#   return html_improved_report_file
     return html_report_file
 
 ### ----------        

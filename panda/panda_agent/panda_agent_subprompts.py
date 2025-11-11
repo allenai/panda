@@ -29,6 +29,8 @@ Answer with a JSON structure of the form: {"strategy": "do" OR "plan" OR "explor
 #	 PARTIAL_PLAN (EXPLORE) SUBPROMPT
 #======================================================================
 
+# **NOTE** Partial planning no longer used (commented out in panda_agent.py)
+
 PARTIAL_PLAN_SUBPROMPT = """
 YOUR NEXT INSTRUCTION: Generate a partial plan - one or more initial steps - to get started on this task.
 The partial plan should specify initial explorations / data gathering operations to help you get started.
@@ -45,6 +47,8 @@ Return your partial plan as a JSON object with the following structure:
 #	 CONTINUE_PLAN SUBPROMPT (follows completion of PARTIAL_PLAN)
 #======================================================================
 
+# **NOTE** Partial planning no longer used (commented out in panda_agent.py)
+
 CONTINUE_PLAN_SUBPROMPT = """
 YOUR NEXT INSTRUCTION: Now that you've completed the partial plan, generate either:
  - a complete new plan to finish the top-level task, or
@@ -57,11 +61,29 @@ Return your plan as a JSON object with the following structure:
 """
 
 #======================================================================
+#	PLAN_DESIGN_DECISIONS SUBPROMPT
+# [EXPERIMENTAL]
+#======================================================================
+
+PLAN_DESIGN_DECISIONS_SUBPROMPT = """
+YOUR NEXT INSTRUCTION: You will shortly be asked to generate a plan to perform this research. 
+However, BEFORE doing that, in preparation for making an actual plan, first identify the key 
+design decisions that are needed for research plan, and recommendations about which option to choose.
+
+(Avoid plans that involve human labeling, verification, etc. as you are not able to interact with humans).
+
+Return your list of design decisions as a JSON object with the following structure:
+{"design_decisions": [{"number":1, "design_decision":DESCRIPTION, "recommendation":RECOMMENDATION}, {"number":2, ...}]}
+"""
+
+#======================================================================
 #	PLAN SUBPROMPT
 #======================================================================
 
 PLAN_SUBPROMPT = """
-YOUR NEXT INSTRUCTION: generate a plan to perform this research. Return your plan as a JSON object with the following structure:
+YOUR NEXT INSTRUCTION: generate a plan to perform this research. 
+Avoid steps that involve human labeling, verification, etc. as you are not able to interact with humans.
+Return your plan as a JSON object with the following structure:
 {"plan": [{"step_number":1, "step":DESCRIPTION}, {"step_number":2, "step":DESCRIPTION}, ....]}
 """
 
@@ -76,6 +98,7 @@ YOUR NEXT INSTRUCTION: Generate a revised plan to perform the research task.
 You don't need to repeat steps that were already performed successfully, i.e., the new plan should start from the current state of your research, rather than start from scratch.
 You can reuse variables and data structures from the earlier execution, if that is helpful.
 I will then discard the old plan, and continue with your revised plan.
+Avoid steps that involve human labeling, verification, etc. as you are not able to interact with humans.
 Make sure your plan is DIFFERENT to the previous PLAN!! In particular, DO NOT REPEAT THE STEP THAT FAILED!
 
 Return your revised plan as a JSON object with the following structure:
@@ -87,7 +110,8 @@ Return your revised plan as a JSON object with the following structure:
 #======================================================================
 
 ACTION_SUBPROMPT = """
-YOUR NEXT INSTRUCTION: Generate Python code that implements this step. I'll then execute it and show you the results.
+YOUR NEXT INSTRUCTION: Generate Python code that implements this step. I'll then execute it and show you the results. 
+Avoid code, e.g., input(), that requires a response from the user.
 Return your answer as a JSON object of the form:
       {"thought":THOUGHT, "action":PYTHON_CODE}
 """

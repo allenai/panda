@@ -1,29 +1,35 @@
 
 import os
+import sys
 
 doc = {}
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+# for the below two, as we use LiteLLM, we only need the values to check they exist, but they're not used in the code directly
 TOGETHER_API_KEY = os.environ.get("TOGETHER_API_KEY")
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
 
 # Go to inferd.allen.ai to renew INFERD token
 INFERD_TOKEN = os.environ.get("INFERD_TOKEN")
 
+MODEL_NAMES = ['gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude-3.5', 'claude', 'o1-mini', 'o3-mini', 'o4-mini']
+JSON_CAPABLE_MODEL_NAMES = ['gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude-3.5', 'claude', 'o1-mini', 'o3-mini', 'o4-mini']
+
 if OPENAI_API_KEY is None:
-    print("Please set your OPENAI_API_KEY environment variable to continue!")
+    print("Please set your OPENAI_API_KEY environment variable to continue!", file=sys.stderr)
 if TOGETHER_API_KEY is None:
-    print("Please set your TOGETHER_API_KEY environment variable if you want to use Mistral and/or Llama!")
+    print("Please set your TOGETHER_API_KEY environment variable if you want to use Mistral and/or Llama!", file=sys.stderr)
 if INFERD_TOKEN is None:
-    print("Please set your INFERD_TOKEN environment varaiable if you want to use OLMo!")
+    print("Please set your INFERD_TOKEN environment varaiable if you want to use OLMo!", file=sys.stderr)
 if ANTHROPIC_API_KEY is None:
-    print("Please set your ANTHROPIC_API_KEY environment varaiable if you want to use Clude!")    
+    print("Please set your ANTHROPIC_API_KEY environment varaiable if you want to use Clude!", file=sys.stderr)    
 
 # keys and models
 OAI_ENDPOINT = "https://api.openai.com/v1/chat/completions"
 
 #OLMO_ENDPOINT = 'https://ai2-reviz--olmoe-1b-7b-0924-instruct.modal.run/completion'  # updated 10/16/24
-OLMO_ENDPOINT = "https://inferd.allen.ai/api/v1/infer"
+#OLMO_ENDPOINT = "https://inferd.allen.ai/api/v1/infer"
+OLMO_ENDPOINT = "https://ai2endpoints.cirrascale.ai/api"
 #OLMO_VERSION_ID = 'mov_01j1x1awwfqx23gmw0wkmb73ea'
 OLMO_VERSION_ID = 'mov_01j74syrtad9dyfkc7zm4jrske'    # olmo-7b-chat
 
@@ -42,7 +48,7 @@ MISTRAL_MODEL = "together_ai/mistralai/Mistral-7B-Instruct-v0.2"
 #DEFAULT_GPT4_MODEL = 'gpt-4.1-nano'
 DEFAULT_GPT4_MODEL = 'gpt-4.1'
 DEFAULT_GPT45_MODEL = 'gpt-4.5-preview-2025-02-27'
-#DEFAULT_CLAUDE_MODEL = "claude-3-5-sonnet-20240620"
+CLAUDE35_MODEL = "claude-3-5-sonnet-20240620"
 #DEFAULT_CLAUDE_MODEL = "claude-3-7-sonnet-latest"
 DEFAULT_CLAUDE_MODEL = "claude-sonnet-4-20250514"
 
@@ -53,10 +59,9 @@ MAX_LITELLM_ATTEMPTS = 3
 
 TOGETHER_TIMEOUT = 30
 OLMO_TIMEOUT = 60
-#GPT_TIMEOUT = 60
 GPT_TIMEOUT = 300
 GPT45_TIMEOUT = 300
-O1_TIMEOUT = 120
+GPT_REASONING_TIMEOUT = 600
 
     
 

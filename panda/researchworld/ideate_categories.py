@@ -1,12 +1,12 @@
 
 import pandas as pd
 
-from panda.utils import llm_list_json
+from panda.utils import llm_list_json, logger
 from .score_categories import score_categories
 from .categorize_items import place_items_in_categories
 from . import config
 
-MAX_N_SAMPLE = 5         # for ideating good and bad categories
+# MAX_N_SAMPLE = 5         # The number of best and worst examples to show in the prompt when asking for good/bad categories
 
 # global, to track created categories
 created_categories = []
@@ -63,7 +63,7 @@ def ideate_categories(dataset, item_col='question', score_col='score', highlow='
 #   worst3 = dataset[dataset[score_col] < 0.5].nsmallest(3, score_col)	# must get item wrong - makes too many assumptions though
 #   best3  = dataset[dataset[score_col] > 0.5].nlargest( 3, score_col)	# must get item right
 
-    n_sample = min(MAX_N_SAMPLE,round(len(dataset)/2))
+    n_sample = min(config.MAX_N_SAMPLE,round(len(dataset)/2))
     top3 = dataset.nlargest( n_sample, score_col)
     bot3 = dataset.nsmallest(n_sample, score_col)
     average_score = pd.concat([top3,bot3])[score_col].mean()
@@ -99,7 +99,6 @@ Here are {len(worst3)} {item_col}s with {lowhigh} {score_col}s:
 List {n_cats} possible categories that cover the {item_col}s with {highlow} {score_col}s, but do not cover the {item_col}s with {lowhigh} {score_col}s."""
     difficult_item_category_list = llm_list_json(prompt, "{'title':CATEGORY_TITLE, 'description':CATEGORY_DESCRIPTION}", n=n)
 
-#   print("DEBUG: ideation prompt =", prompt)
     # 4. Create an "everything" category for index 0
     everything_category = {'title':"everything", 'description':"The entire dataset"}
 
@@ -121,7 +120,7 @@ List {n_cats} possible categories that cover the {item_col}s with {highlow} {sco
 #    categories_sorted = categories.loc[1:].sort_values('signal', ascending=False)
 #    final_categories = pd.concat([row_0, categories_sorted])
 
-    print(categories_sorted)
+    logger.info(categories_sorted)
     created_categories += [categories_sorted]
     return categories_sorted
 
@@ -178,11 +177,8 @@ def examples_in_category(dataset:pd.DataFrame, category_row:pd.Series, score_col
 
     def local_is_in_category(row, cat_index):
         for category in row[data_cat_col]:
-#           print("category =", category)          # e.g.,  {'index': 0, 'score': 1}
             if category['index'] == cat_index and category['score'] > 0.5:
-#               print("-> true!")
                 return True
-#       print("-> false")            
         return False
 
 #   dataset_in_category = dataset[local_is_in_category(dataset[data_cat_col],cat_index)]

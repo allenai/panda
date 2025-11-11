@@ -1,4 +1,4 @@
-# Panda v1.4.8
+# Panda v1.4.9
 
 # Overview
 
@@ -6,26 +6,9 @@ Panda is an autonomous research agent that implements an outer-loop of plan-do, 
 
 For an example output report and trace, see the /output directory. The .html files are (rather naive) final reports, and the \-trace.txt files show the execution trace of panda running on a few illustrative tasks.
 
-## Changes/Additions:
-
- * v1.2: Addition of evaluate.pl to run evaluations, (with a toy and larger datasets in panda/evaluate/norabench*.csv files)
- * v1.3: Code refactoring, make panda a package. Renamed top-level call to run_panda()
- * v1.4: Add superpanda (iterative experiments) capability
- * v1.4.3: Add in some literature search tools (see panda/researchworld/lit_search.py) - these are currently not fully linked into Panda
- * v1.4.4: Add in panda/evaluate/run_astabench_evaluation.py for running ASTAbench tasks
- * v1.4.5: Restructure package, remove relative imports
- * v1.4.6: Package result outputs into a subdirectory, bug fixes
- * v1.4.8: Rename package as Panda ("plan-and-act")
-
-## Functions:
-
- * panda.run_panda()   # Main entry point (resets state)
- * panda.restart()        # Restart Panda (continue from where it died/was interrupted)
- * panda.py(string)       # Execute Python (in string) within the exec() context that Panda runs its code in
- * panda.run_evaluation() # Run evaluation (with default panda/evaluate/norabench_tiny_tasks.csv, outputs to evaluation_output)
- * panda.run_astabench_tasks(task_file="panda/evaluate/panda_hyper_tasks.json", results_dir="hyper_results/")   # Run ASTAbench evaluation
-
 # Usage
+
+## Instructions
 
 1. Make sure you have your OpenAI key set in the environment variable OPENAI\_API\_KEY. Optional: If you also want to use Mistral/LLama, also set TOGETHER\_API\_KEY. If you want to use Claude, also set ANTHROPIC\_API\_KEY.
 2. Create a new environment, and then do:
@@ -38,12 +21,23 @@ conda install pip
 pip install -e .
 ```
 
-3. To run, go the top-level panda directory, then start ipython:
-
+3.1 Run from comamand line:
 ```
-$ ls
+% conda activate panda
+(panda) % python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
+```
+With optional arguments:
+  --force_report     - force Panda to *always* write a report on its work
+  --outputs_dir      - directory for the experimental results directory (containing report and other artifacts). Default is output/
+
+
+3.2 OR Run from iPython interactively
+To run, go the top-level panda directory, then start ipython:
+```
+% conda activate panda
+(panda) % ls
 README.md     panda/     setup.py      LICENCE      VERSION     (etc)
-$ ipython
+(panda) % ipython
 In [1]: import panda
 In [2]: panda.run_panda()
 What is the next research action/task you'd like me to do (or 'q' to quit)? End with blank line (**HIT RETURN TWICE**) 
@@ -51,6 +45,33 @@ What is the next research action/task you'd like me to do (or 'q' to quit)? End 
 ```
 
 **NOTE** hit \<return\> ***twice*** after you enter your task. If nothing seems to be happening, it's likely because you need to hit \<return\> a second time.
+
+3.3 OR Run from iPython programmatically, passing the task as an argument
+
+```
+In [4]: result = panda.run_panda(task="What is 1 + 1?", force_report=True)
+In [5]: print(result)
+{'result_flag': 'done',
+ 'report_pathstem': 'c:/Users/peter/Dropbox/Desktop/2025/Panda/panda/subdir_of_panda/experiment-20251111-095236/experiment',
+ 'summary': 'The research successfully determined that 1 + 1 equals 2 through direct arithmetic calculation.',
+ 'token_counts': [{'model': 'claude-sonnet-4-20250514','prompt_tokens':54843,'completion_tokens':341,'total_tokens':55184}]}
+```
+Notes:
+ * A result of "done" indicates the research was successful, anything else and it failed.
+ * "force_report=True" *forces* Panda to produce a report (if the research was successful).
+ * The report_filestem shows where the .html and .txt reports are, as well as the -trace.txt and -trace-long.txt log files.
+ * The summary is a short GPT-generated summary for the user.
+
+The full list of arguments are given in panda/panda_agent/panda_agent.py:
+```
+run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir="output")
+```
+
+3.4 Via MCP, linked to Cursor
+See panda/mcp.json
+Connection is .cursor/mcp.json -> run_panda.bat -> python[that contains panda environment] panda.mcp_server (which imports panda) -> panda.run_panda()
+
+## Examples
 
 Some example tasks you can try:
 
@@ -62,25 +83,6 @@ Some example tasks you can try:
 * Is Llama capable of behaving deceptively?  
 * Is Llama capable of generating hate speech?  
 * Which foreign languages does Llama know best?
-
-Panda can also be used programmatically, passing the task as an argument:
-
-```
-In [4]: result, report_filestem, summary = panda.run_panda(task="What is 1 + 1?", force_report=True)
-In [5]: print(result)
-done
-In [5]: print(report_filestem)
-c:\Users\peter\Dropbox\Desktop\2025\Panda\panda\output\report_02-26-2025_21.39
-In [6]: print(summary)
-The research concluded that the simple arithmetic operation of adding two one-digit numbers, specifically 1 + 1, was successfully performed using Python, resulting in an answer of 2.
-```
-Notes:
- * A result of "done" indicates the research was successful, anything else and it failed.
- * "force_report=True" *forces* Panda to produce a report (if the research was successful).
- * The report_filestem shows where the .html and .txt reports are, as well as the -trace.txt and -trace-long.txt log files.
- * The summary is a short GPT-generated summary for the user.
-
-To do further processing on the results of Panda, ask GPT to read the .txt report and provide whatever information you need from it.
 
 # Description
 
@@ -174,6 +176,18 @@ The step counter ensures that the plan is followed systematically without skippi
     * run_astabench_evaluation.py   Run an evaluation (.json (ASTABench) dataset). Results placed in astabench/ by default.
     * astabench\_tiny\_tasks.csv    A toy .csv dataset
   
+# Revision History:
+
+ * v1.2: Addition of evaluate.pl to run evaluations, (with a toy and larger datasets in panda/evaluate/norabench*.csv files)
+ * v1.3: Code refactoring, make panda a package. Renamed top-level call to run_panda()
+ * v1.4: Add superpanda (iterative experiments) capability
+ * v1.4.3: Add in some literature search tools (see panda/researchworld/lit_search.py) - these are currently not fully linked into Panda
+ * v1.4.4: Add in panda/evaluate/run_astabench_evaluation.py for running ASTAbench tasks
+ * v1.4.5: Restructure package, remove relative imports
+ * v1.4.6: Package result outputs into a subdirectory, bug fixes
+ * v1.4.8: Rename package as Panda ("plan-and-act")
+ * v1.4.9: Add MCP interface (panda/mcp_server.py) and command line execution (python run_panda.py "What is 1 + 1?")
+
 # Questions, Issues, and Further Information
 
 Contact Peter Clark (peterc@allenai.org)

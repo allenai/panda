@@ -3,13 +3,14 @@ import os
 
 #PANDA_LLM = 'gpt-4.1'
 PANDA_LLM = 'claude'
+#PANDA_LLM = 'gpt-5-mini'
 REPORT_WRITER_LLM = PANDA_LLM
 REPORT_TRANSLATOR_LLM = PANDA_LLM	# convert HTML to text (not used now I think)
 
-SUPERPANDA_LLM = 'gpt-4.1'
-SUPERPANDA_REPORT_WRITER_LLM = SUPERPANDA_LLM
+SUPERPANDA_LLM = PANDA_LLM
+SUPERPANDA_REPORT_WRITER_LLM = PANDA_LLM
 
-ITERPANDA_LLM = 'gpt-4.1'	# relies on class...
+ITERPANDA_LLM = PANDA_LLM	# relies on class...
 
 # Get the directory where my_globals.py is located
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))		# panda/panda/panda_agent
@@ -40,7 +41,9 @@ doc = {}		 # Place to put docstring for write_report.write_report()
 MAX_RETRIES = 2
 MAX_EARLIER_STEP_RETRIES = 2
 MAX_ITERATIONS = 200     # prevent runaway system!
-EXEC_TIMEOUT = 3600	 # 60 min max for executing a function, otherwise give up. This better be long enough!
+#EXEC_TIMEOUT = 3600	 # 60 min max for executing a function, otherwise give up. This better be long enough!
+#EXPERIMENT_TIMEOUT = 7200	 # 2 hr max for an experiment
+EXPERIMENT_TIMEOUT = 10800	 # 3 hr max for an experiment
 
 PANDA_HEADER = "============================== Panda =============================="
 SYSTEM_PROMPT_HEADER   = "============================ SYSTEM PROMPT ==========================="

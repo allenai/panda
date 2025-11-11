@@ -5,10 +5,14 @@ USAGE:
 %autoreload 2 
 import panda
 panda.run_panda()				# interactive
-panda.run_panda(task="How good is Llama at 2-digit addition?",allow_shortcuts=True)    # batch run
+panda.run_panda(task="How good is Claude at 2-digit addition? Use a dataset of 5 examples.")
 
 Also:
 panda.run_panda(plan=['Generate 5 math questions','Have Llama answer them','Score the answers','Ensure the variance in the scores is > 0.5'])
+
+Disable output (except "..." to stderr)
+import logging
+panda.panda_agent.panda_agent.logger.setLevel(logging.CRITICAL)
 
 ### Running a santity test. Note this takes 30-60 mins to complete
 panda.test_panda()
@@ -21,7 +25,7 @@ my_globals.print_so_far = what the user sees as printed by print_to_user (abbrev
 my_globals.dialog_so_far = GPT dialog (list)
 observation(s) - what gets added to prompt, which gets added to my_globals.dialog_so_far. Some (but not all) are print_to_user'ed also.
 
-NEW: run_panda() creates a subdirectory "output/experiment-<timestamp>/" and puts all created files in that subdirectory as follows:
+NEW: run_panda() creates a subdairectory "output/experiment-<timestamp>/" and puts all created files in that subdirectory as follows:
    experiment.txt		# report
    experiment.html		# report
    experiment.py		# code
@@ -36,10 +40,11 @@ import json
 import pandas as pd
 import time
 import datetime
+import logging
 import os
 import traceback
 import requests
-# from func_timeout import func_timeout, FunctionTimedOut
+from func_timeout import func_timeout, FunctionTimedOut
 from string import Template		# for build_system_prompt()
 
 # fix to avoid "RuntimeError: main thread is not in main loop" during generated code execution (can't run interactive plt in func_timeout()
@@ -61,18 +66,21 @@ from . import config as agent_config
 # import prompts
 from .panda_agent_subprompts import *
 
-### These are the TOOLS available to Panda for research (for now)
+### These are the TOOLS available to Panda for research (for now). 
+from panda.utils import call_llm, llm_list, get_token_counts, code_asks_for_user_input, logger, remove_trailing_newline
 from panda.researchworld import create_dataset, answer_questions, score_answers, spearman_strength, pearson_strength, ideate_categories, examples_in_category
 from panda.researchworld import get_function_documentation, get_workflow_documentation, get_plan_documentation
-from panda.utils import call_llm, llm_list, get_token_counts
 from .report_writer import write_report, REPORT_DIR
+
+# temporary 
+# from panda.researchworld.prisoners_dilemma import PrisonersDilemma
 
 # Below purely to get researchworld.tools.created_datasets and researchworld.tools.created_categories vars (rather than a COPY of those vars at import time, voa from ... import ..)
 import panda.researchworld.tools as tools
 import panda.researchworld.ideate_categories as ideate_categories
 
 ### Additional functions used by the Panda agent implementation itself (but not required to do research)
-from panda.utils import call_llm, call_llm_json, parse_code, multiline_input, similar_strings, reset_token_counts, printf
+from panda.utils import call_llm, call_llm_json, parse_code, multiline_input, similar_strings, reset_token_counts
 from .report_writer import save_dialog
 
 from panda.researchworld.lit_search import *	# lit tasks - not yet included
@@ -82,6 +90,13 @@ from .superpanda import run_superpanda
 from .iterpanda import run_iterpanda
 
 # ----------------------------------------
+
+# block execution of these
+dangerous_patterns = [
+    r"shutil\.make_archive",      # direct use - often includes itself (from gpt-5-mini) which recursively fills the filesystem
+    r"zipfile\.ZipFile",          # manual zipping
+    r"tarfile\.open",             # tar/gzip creation
+]
 
 # Cosmetic preferences:
 sys.stdout.reconfigure(encoding='utf-8')                # occasionally GPT can return a non-standard character, which raises an exception when I attempt to print it (stdout) 
@@ -119,8 +134,8 @@ TEST_TASKS = ["How good is Llama at 2-digit addition, e.g., '23 + 43 = ?'", \
 def test_panda():
     result_summaries = ""
     for test_task in TEST_TASKS:
-        result = run_panda(task=test_task)
-        result_summary = f"FINAL result: {result} for task: {test_task}."
+        result_flag = run_panda(task=test_task)
+        result_summary = f"FINAL result: {result_flag} for task: {test_task}."
         print_to_user(result_summary)
         result_summaries += result_summary + "\n"
     print_to_user("\n\nFINAL RESULTS:\n", result_summaries)        
@@ -139,25 +154,31 @@ class State:
 		MAIN FUNCTION: run_panda()
 ======================================================================
 background_knowledge = contextual text to provide at the start of the conversation. It doesn't reappear later (unlike the task which is repeated)
-force_report = True: Write a report for *successful* (result='done') research (sometimes the plan might omit report-writing)
+force_report = True: Write a report for *successful* (result_flag='done') research (sometimes the plan might omit report-writing)
 allow_shortcuts = True: Don't check for hallucinations/shortcuts in the research, and don't give option to abort (except for too many iterations)
 
 Core functions. Two modes:
 1. Interactive: task=None, interactive=True - repeatedly ask for the next task
 2. Non-intearctive: task=task, interactive=False - do the given task then stop. Returns "success" or "fail" depending on the outcome
 RETURNS: 
- - result ("done" or an error code)
+ - result_flag ("done" or an error code)
  - the filestem of a report (if one was generated)
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
 """
-def run_panda(task=None, plan=None, background_knowledge=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True):
+def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir="output"):
+
+    # TEMP for debugging...
+#    import logging
+#    logger.setLevel(logging.CRITICAL)
 
     # Let's switch to a new directory for a new run:
     now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    output_dir = os.path.join(agent_config.ROOT_DIR, "output", "experiment-"+now_str)
+    output_dir = os.path.join(agent_config.ROOT_DIR, outputs_dir, "experiment-"+now_str)
     os.makedirs(output_dir, exist_ok=True)
     os.chdir(output_dir)
+    report_pathstem = os.path.abspath("experiment").replace("\\", "/")    # Use "/" for standardized (POSIX) path format
+    my_globals.report_pathstem = report_pathstem			  # store this in a global for use by report_writer.py
 
     global interactive, nora_thread_id, nora_system_output
     print_to_user(agent_config.VERSION, " (running using ", model, ")", sep="")
@@ -167,6 +188,7 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
         state = reset_the_namespace()
     else:
         state = my_globals.state['state']    	# continue from last time
+        state.iteration = 0			# BUT: Still must reset iteration counter!
 
     if reset_dialog or not SYSTEM_PROMPT:
         reset_the_dialog(task=task, background_knowledge=background_knowledge, allow_shortcuts=allow_shortcuts)
@@ -174,7 +196,7 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
     reset_panda_session()		# always do this - reset all counters        
     nora_thread_id = thread_id		# for use with the NORA UI
     nora_system_output = ""		# for use with the NORA UI
-    summary_str = ""
+    summary = ""
     interactive = False if task else True
 
     try:
@@ -187,7 +209,7 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
                 task = 'Execute the plan'
             task_plan = [{'step_number':1,'step':task}]
             task_planinfo = {'plan':task_plan, 'step_number':1, 'step':task}	
-            result = panda_step("act", planinfo, state, [task_planinfo], model)	# MAIN ENTRY POINT
+            result_flag = timebounded_panda_step("act", planinfo, state, [task_planinfo], model)	# MAIN ENTRY POINT
         
         elif task:
 #	   No, might be too big!            
@@ -196,15 +218,13 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
             print_to_user("Top-Level Task:", task)
             plan = [{'step_number':1,'step':task}]			       # The top-level task is treated as a "plan" with 1 step = the entire task.
             planinfo = {'plan':plan, 'step_number':1, 'step':task}	       # planinfo = the plan, plus a note of the current step (initially = 1).
-            result = panda_step("strategize", planinfo, state, [], model)  # strategize = decide whether to plan, or just do the task (if simple).    MAIN ENTRY POINT
+            result_flag = timebounded_panda_step("strategize", planinfo, state, [], model)  # strategize = decide whether to plan, or just do the task (if simple).    MAIN ENTRY POINT
 
         else:
-            planinfo = {'plan':None, 'step_number':None, 'step':None}
-            result = panda_step("start", planinfo, state, [], model)			# MAIN ENTRY POINT. result = "done" or "abort_<failure mode>"
+            planinfo = {'plan':None, 'step_number':None, 'step':None}	       		# If task=None (here), then this starts Panda in interactive mode, and it asks for a task
+            result_flag = timebounded_panda_step("start", planinfo, state, [], model)			# MAIN ENTRY POINT. result_flag = "done" or "abort_<failure mode>"
 
-        # If already wrote report as part of the plan, then return that one. Else write a report (if research successful ("done")).
-        report_pathstem = my_globals.last_report_pathstem
-        if not file_exists(report_pathstem + ".txt") and force_report and result == "done":
+        if not file_exists(report_pathstem + ".txt") and force_report: #  and result_flag == "done":
             try:
                 message = "No report generated! Trying to generate one now...\n"
                 print_to_user(message)
@@ -217,53 +237,56 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
                 my_globals.dialog_so_far[-1] += message
                 with open(report_pathstem + ".txt", "w", encoding='utf-8', errors='replace') as file:
                     file.write(message)
+                with open(report_pathstem + ".html", "w", encoding='utf-8', errors='replace') as file:
+                    file.write(message)                    
 
         # Now tidy up
-        summary_str = get_summary(result)
-        message = "\n-------------------------------------\nFinal summary: " + summary_str + "\n"
+        summary = get_summary(result_flag)
+        message = "\n-------------------------------------\nFinal summary: " + summary + "\n"
         print_to_user(message)
         my_globals.dialog_so_far[-1] += message            
     
         if not interactive:        
-            save_dialog()	
+            save_dialog()
 
     except Exception as e:
         tb = traceback.format_exc()                                     
         message = f"Yikes! Top-level run_panda() failed!! Error: {e}\nTraceback:\n{tb}\n"
         print_to_user(message)
-        my_globals.dialog_so_far[-1] += message        
-        result = "abort_python_error"
-        report_pathstem = None
-        summary_str = message
+        my_globals.dialog_so_far[-1] += message
+        if force_report == True:
+            with open(report_pathstem + ".txt", "w", encoding="utf-8") as file:	# this will overwrite report, but Exception should never occur!
+                file.write(message)
+            with open(report_pathstem + ".html", "w", encoding="utf-8") as file:
+                file.write(message)
+        summary = message
+        result_flag = "abort_python_error"
 
     token_counts = get_token_counts()		# in utils/ask-llm.py  eg [{"model":"gpt-4.1","prompt_tokens":100,"completion_tokens":310,"total_tokens":410}]
-    os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
+    with open(report_pathstem + "-done.txt", "w", encoding="utf-8") as file:
+        file.write(result_flag+"\n")
     
-    print(f"DEBUG: run_panda(): result = {result}, report_pathstem = {report_pathstem}, summary_str = {summary_str}, token_counts = {token_counts}")
-    return result, report_pathstem, summary_str, token_counts
+    os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
+
+    # Note we should *always* return report_pathstem, even if there's no report, so we can at least see the artifacts, traces, etc.
+    logger.debug(f"DEBUG: run_panda(): result_flag = {result_flag}, report_pathstem = {report_pathstem}, summary = {summary}, token_counts = {token_counts}")
+#   return result_flag, report_pathstem, summary, token_counts    
+    return {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}
 
 # ----------
 
 # Summarize the research trajectory (used only for NORA UI).
 # (Note the outcome could be an abort).
 # I need to add the prompt as a NEW element (+[prompt]) otherwise it potentially gets concatenated (and hence confused with) to the earlier instructions.
-def get_summary(result):
-    if result == "done":
+def get_summary(result_flag):
+    if result_flag == "done":
         prompt = "Generate one or two sentences that briefly summarize the conclusions of this research."
     else:
-        prompt = f"The research failed to to an error ({result}). Generate one or two sentences briefly summarizing what went wrong."
+        prompt = f"The research failed due to an error ({result_flag}). Generate one or two sentences summarizing the research so far, and the reason for the failure."
         
-    summary_str = call_llm(my_globals.dialog_so_far + [prompt], model=agent_config.PANDA_LLM)
-    print("DEBUG: Final summary:", summary_str)
-    return summary_str
-
-#def get_summary():
-#    prompt = "\n\nFinally, Generate one or two sentences that briefly summarize the conclusions of this research."
-#    my_globals.dialog_so_far[-1] += prompt				# this APPENDS prompt to the last string (= observations) in the list
-#    summary_str = call_llm(my_globals.dialog_so_far, model=agent_config.PANDA_LLM)
-#    my_globals.dialog_so_far.append(summary_str)
-#    print("Final summary:", summary_str)
-#    return summary_str
+    summary = call_llm(my_globals.dialog_so_far + [prompt], model=agent_config.PANDA_LLM)
+    logger.debug("DEBUG: Final summary: %s", summary)
+    return summary
 
 # ----------
 
@@ -305,15 +328,14 @@ def reset_panda_session():
     my_globals.plotfiles_so_far = []	    # Note we *don't* reset plot_counter to avoid collisions between different experiments (for now...later should move them)
     tools.created_datasets = []
     ideate_categories.created_categories = []
-    my_globals.py_counter = 1
+    my_globals.py_counter = 1    
     my_globals.start_time = time.time()    
     reset_token_counts()
-    my_globals.last_report_pathstem = os.path.abspath("experiment")		# NEW: report_pathstem is a CONSTANT now	
     global retry_counter, retry_earlier_step_counter
     retry_counter = 0
     retry_earlier_step_counter = 0
     if USE_ADVICE:        
-        print("DEBUG: Reading advice file...")        
+        logger.debug("DEBUG: Reading advice file...")        
         ADVICE = read_advice_file(agent_config.ADVICE_FILE)
 
 # ----------
@@ -321,7 +343,7 @@ def reset_panda_session():
 # Build system prompt dynamically, to accomodate changing researchworld function documenntation and example workflows
 def build_system_prompt(allow_shortcuts=False):
     global SYSTEM_PROMPT, REFLECTION_SUBPROMPT, PLAN_REFLECTION_SUBPROMPT
-    print("DEBUG: Building system prompt...")
+    logger.debug("DEBUG: Building system prompt...")
 
     if allow_shortcuts:
         system_prompt_template_file = agent_config.SYSTEM_PROMPT_TEMPLATE_FILE_ALLOW_SHORTCUTS
@@ -371,6 +393,23 @@ def py(cmd):
     else:
         print_to_user("ERROR! Please provide a string as an argument to py()!")
 
+# ======================================================================
+
+# Your existing function
+def timebounded_panda_step(mode, planinfo, state, planstack=[], model=agent_config.PANDA_LLM):
+    try:
+        result_flag = panda_step(mode, planinfo, state, planstack, agent_config.PANDA_LLM)
+# timebounded Version. NOTE: CTRL-C doesn't work within this though :(, so replace with timestamp check in top-level step() loop
+#        result_flag = func_timeout(
+#            agent_config.EXPERIMENT_TIMEOUT,   
+#            panda_step, 
+#            args=(mode, planinfo, state, planstack, agent_config.PANDA_LLM)
+#        )
+    except FunctionTimedOut:
+        logger.debug(f"Experiment taking too long (> {agent_config.EXPERIMENT_TIMEOUT} sec) - giving up...")
+        result_flag = 'abort_took_too_long'
+    return result_flag        
+
 ### ======================================================================
 ###		MAIN LOOP	
 ### ======================================================================
@@ -397,16 +436,23 @@ def panda_step(mode, planinfo, state, planstack=[], model=agent_config.PANDA_LLM
         print_to_user(observation)
         mode = "abort_iterations"			# and pass onto next clause below
 
+    if time.time() > my_globals.start_time + agent_config.EXPERIMENT_TIMEOUT:
+        observation = f"Yikes!!! Exceeded EXPERIMENT_TIMEOUT ({agent_config.EXPERIMENT_TIMEOUT}) seconds! Giving up!"
+        state.observations += observation
+        print_to_user(observation)
+        mode = 'abort_took_too_long'			# and pass onto next clause below
+
     # ----------------------------------------        
-    # 2. Finished! Pop the plan stack (if any), else ask the user for a new task (interactive mode), or return the final result
+    # 2. Finished! Pop the plan stack (if any), else ask the user for a new task (interactive mode), or return the final result_flag
     # ----------------------------------------
-    if mode in ["start", "done", "abort_iterations", "abort_shortcuts", "abort_impossible", "abort_beyond_capabilities", "abort_python_error"]:
+    if mode in ["start", "done", "abort_iterations", "abort_shortcuts", "abort_impossible", "abort_beyond_capabilities", 
+                "abort_python_error", "abort_took_too_long"]:
         if interactive and (mode != "done" or planstack == []):		# planstack == [] means main task done, not just a subtask done. mode !=  "done" means the main task was aborted.
             if mode != "start":
                 save_dialog()				# make a note of previous research
-            my_globals.start_time = time.time()         # reset the clock for the next iteration
             reset_token_counts()                
             new_task = multiline_input("\nWhat is the next research action/task you'd like me to do (or 'q' to quit)? End with blank line (**HIT RETURN TWICE**) \n> ")         
+            my_globals.start_time = time.time()         # reset the clock for the next iteration
             if new_task == 'q':
                 my_globals.dialog_so_far.append(state.observations)
                 return "done"				# no return value in interactive mode
@@ -465,7 +511,7 @@ def panda_step(mode, planinfo, state, planstack=[], model=agent_config.PANDA_LLM
             return panda_step0(mode, planinfo, state, planstack, model)
         except Exception as e:
             tb = traceback.format_exc()             
-            print(f"Yikes! Unexpected exception: {e}.\nTraceback:\n{tb}\nAborting...")
+            logger.debug(f"Yikes! Unexpected exception: {e}.\nTraceback:\n{tb}\nAborting...")
             return panda_step("abort_python_error", planinfo, state, planstack, model)
 
 
@@ -474,7 +520,6 @@ def panda_step(mode, planinfo, state, planstack=[], model=agent_config.PANDA_LLM
 # plan = [{'step_number':1, 'step':'Create dataset'}, {'step_number':2, 'step':'Answer the questions'}]
 # plan_step(plan,2) # -> 'Answer the questions'
 def plan_step(plan, step_number):
-#    print("DEBUG: plan =", plan)
     return [step["step"] for step in plan if step["step_number"] == step_number][0]	# find the text for step_number    
 
 # ======================================================================
@@ -506,14 +551,21 @@ def panda_step0(mode, planinfo, state, planstack, model=agent_config.PANDA_LLM):
     # ========================================
     #     THE MAIN AGENT CALL TO THE LLM
     # ========================================
-#   print("DEBUG: Calling LLM model", model)
     response_json, response_str = call_llm_json(my_globals.dialog_so_far, temperature=temperature, model=model) # <- ask GPT for its reply...
     my_globals.dialog_so_far.append(response_str)    					# <- add GPT's reply to the dialog so far...
+    clear_screen()
 
     # Process based on the mode								# Now, process the reply appropriately, depending on what the question (mode) was...
     if mode == "strategize":			# stategize = for current step, should I plan, just do it, or generate a partial plan?
         new_mode, state.observations = strategize(response_json)
         return panda_step(new_mode, planinfo, state, planstack, model)
+
+    # experimental - do design decisions before an actual plan
+    # This option not currently used (uncomment plan_design_decisions later to use it)
+    elif mode in ["plan_design_decisions"]:
+        # actually the design decisions are rhetorical so not used further
+        design_decisions, state.observations = create_plan_design_decisions(response_json, mode=mode)
+        return panda_step("plan", planinfo, state, planstack, model)
         
     elif mode in ["plan", "partial_plan", "replan", "continue_plan"]:
         subplan, state.observations = create_plan(response_json, mode=mode)
@@ -568,7 +620,6 @@ def splice_out(string, start, end):
 # x = {'plan': [{'step_number': 1, 'step': 'What is 1 + 1?'}], 'step_number': 1, 'step': 'What is 1 + 1?'}
 # format_task_hierarchy(x, [])
 def format_task_hierarchy(planinfo, planstack):
-#   print("planinfo =", planinfo)
     formatted_task = ""
     sub = ""
     full_planstack = planstack[::-1] + [planinfo]	# reverse planstack, so now it is [task,plan,subplan,...]
@@ -613,7 +664,6 @@ NOW: Here is your top-level research task:
 
 # The global vars (upper-cased) below are defined in panda_agent_subprompts.py
 def generate_header_and_prompt(mode, planinfo, iteration, model):
-#    print("DEBUG: generating prompt for mode =", mode, "planinfo =", planinfo)
     """Generate headers and prompts for planning modes."""
     step_description = planinfo['step']		# the current step
     step_number = planinfo['step_number']	# the current step number
@@ -631,6 +681,10 @@ def generate_header_and_prompt(mode, planinfo, iteration, model):
         header += f"#{iteration}. Generate a Continuing Plan...\n"
         prompt = CONTINUE_PLAN_SUBPROMPT
         comment = "Generating a continuation of the plan..."
+    elif mode == "plan_design_decisions":					# not currently used
+        header += f"#{iteration}. Identify Design Decisions for Plan\n"
+        prompt = PLAN_DESIGN_DECISIONS_SUBPROMPT
+        comment = "Identifying design decisions for a plan..."
     elif mode == "plan":
         header += f"#{iteration}. Generate Initial Plan\n"
         prompt = PLAN_SUBPROMPT
@@ -648,9 +702,8 @@ def generate_header_and_prompt(mode, planinfo, iteration, model):
         header += f"#{iteration}. Perform Step {step_number}: {step_description}\n"
         header += advice
         prompt = ACTION_SUBPROMPT
-#       print("DEBUG: advice =", repr(advice))
         if advice not in ['','""','- ""','-',"- "]:		# blank advice forms
-            print("DEBUG: repr(advice) =", repr(advice))
+            logger.debug("DEBUG: repr(advice) =", repr(advice))
             comment = f"Found advice: {advice}\nCoding..."
         else:
             comment = "Coding..."                        
@@ -670,9 +723,22 @@ def generate_header_and_prompt(mode, planinfo, iteration, model):
         header += f"#{iteration}. Reflect on Step {step_number}\n"
         prompt = REFLECTION_SUBPROMPT
 #       comment = f"(Using {model} for Panda)\nReflecting..."        
-        comment = "Reflecting..."                                        
+        comment = "Reflecting..."
+    else:
+        raise ValueError(f"ERROR! Unrecognized mode '{mode}' passed to generate_header_and_prompt()!")
     header += "-" * 40 + "\n"
     return header, prompt, comment
+
+# ----------
+
+def pretty_plan_design_decisions(design_decisions, indent=0):
+    formatted_design_decisions = ""
+    for design_decision in design_decisions:
+        formatted_design_decisions += " " * indent + f"{design_decision['number']}. {design_decision['design_decision']}.\n" + " " * indent + \
+            f"   Recommendation: {design_decision['recommendation']}\n"
+    return formatted_design_decisions
+
+# ----------
 
 def pretty_plan(plan, indent=0):
     formatted_plan = ""
@@ -703,7 +769,8 @@ def strategize(response_json):
     if strategy == "do":
         new_mode = "act"
     elif strategy == "plan":
-        new_mode = "plan"
+#       new_mode = "plan_design_decisions"	# TMP - UNCOMMENT This line to turn it on
+        new_mode = "plan"        
     elif strategy == "explore":
         new_mode = "partial_plan"
     else:
@@ -716,8 +783,18 @@ def strategize(response_json):
 # Generate plan (or more precisely: extract plan from the JSON which GPT already created!)
 # Returns plan = [{'step_number': 1, 'step': "Generate a dataset"}, {'step_number': 2, 'step': "..."}...]
 # mode = plan|replan|partial_plan
+def create_plan_design_decisions(response_json, mode):
+    design_decisions = response_json['design_decisions']
+    observations = ""
+    print_to_user("Plan Design Decisions:\n", pretty_plan_design_decisions(design_decisions, indent=3), sep="")
+    return design_decisions, observations
+
+# ----------
+
+# Generate plan (or more precisely: extract plan from the JSON which GPT already created!)
+# Returns plan = [{'step_number': 1, 'step': "Generate a dataset"}, {'step_number': 2, 'step': "..."}...]
+# mode = plan|replan|partial_plan
 def create_plan(response_json, mode):
-#   print("DEBUG: create_plan: response_json =", response_json)
     plan = response_json['plan']	# plan = [{'step_number': 1, 'step': "Generate a dataset"}, {'step_number': 2, 'step': "..."}...]
     if mode == "partial_plan":
         last_step = plan[-1]
@@ -763,15 +840,24 @@ def execute_action(action:str, namespace):
     # parse the action into commands
     try:
         commands = parse_code(action)   # NB Each command not terminated with "\n"
-#       code_to_record = action
         code_to_record = ""		# new - record all successful commands (rather than all fully successful codeblocks)
     except Exception as e:
         tb = traceback.format_exc() 
         observation = f"Error: Can't even parse the generated commands:\n----------\n{action}\n----------\nError: {e}\nTraceback:\n{tb}"
-        print_to_user(observation, end="")
+        print_to_user(observation)
         observations += observation
         observation = agent_config.CODING_END
-        print_to_user(observation, end="")
+        print_to_user(remove_trailing_newline(observation))
+        observations += observation
+        return observations
+
+    # Catch request for user input immediately before starting execution
+    if code_asks_for_user_input(action):		# in utils/pyparser.py
+        observation = f"# Python code\n{action}\n\nERROR: Code contains a line asking for user input (not allowed for autonomous execution!). Please rewrite your code to avoid asking the user!\n"
+        print_to_user(observation)
+        observations += observation
+        observation = agent_config.CODING_END
+        print_to_user(remove_trailing_newline(observation))
         observations += observation
         return observations
 
@@ -784,6 +870,10 @@ def execute_action(action:str, namespace):
             my_globals.plotfiles_so_far += plotfile
             plot_save_command = f'plt.savefig("{plotfile}")'
             command = command.replace("plt.show()", plot_save_command)			    # Replace show with save
+
+
+        if any(re.search(pattern, command) for pattern in dangerous_patterns):		# shutil.make_archive, zipfile.ZipFile, tarfile.open
+            command += "# Bypassing execution (commenting out) the below potentially unsafe archive command.\n# " + command
         
         command_line = f"In [{my_globals.py_counter}]: {command}"
         observations += command_line + "\n"         # note for dialog
@@ -791,23 +881,19 @@ def execute_action(action:str, namespace):
         my_globals.py_counter += 1                
                 
         f = io.StringIO()
-        original_stdout = sys.stdout
-        original_stderr = sys.stderr
-        tee_stdout = Tee(original_stdout, f)  # Capture both stdout and stderr
-        tee_stderr = Tee(original_stderr, f)
+#        original_stdout = sys.stdout
+#        original_stderr = sys.stderr
+#        tee_stdout = LoggerTee(original_stdout, f)  # Capture both stdout and stderr
+#        tee_stderr = LoggerTee(original_stderr, f)
+        tee_stdout = LoggerTee(logger, f)  # Capture both stdout and stderr - now no longer to stdout (breaks MCP)
+        tee_stderr = LoggerTee(logger, f)        
         try:
             with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
-#               func_timeout(agent_config.EXEC_TIMEOUT, exec, args=(command, namespace))
+                # NEW: Timeout handled higher up (see timebounded_panda_step())
                 exec(command, namespace)                # timeout is so long (60 mins) hardly need to use it
                 code_to_record += command + "\n"	# new: record all successful commands
-#       except FunctionTimedOut:			# FunctionTimedOut is a subclass of BaseException, not Exception, so need separate clause here
-#            with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
-#                observation = f"Error: Timeout!! The code took more than the max {agent_config.EXEC_TIMEOUT} secs (infinite loop)? Aborting execution..."
-#                print_to_user(observation)
-#                observations += observation + "\n"
-#                code_to_record = "# The below command failed to execute (raised a TimeOut exception)\n" + add_hash_prefixes(command) + "\n"
-        except Exception as e:
-            # Write the error message to the same buffer
+        except (Exception, SystemExit) as e:      # catch either Exception of SystemExit. SystemExit is a subtype of BaseException, not of Exception (itself a BaseException subtype)
+            # Write the error message to the same buffer		# SystemExit might by synthesized and executed in command itself, hence the addition here
             with redirect_stdout(tee_stdout), redirect_stderr(tee_stderr):
                 tb = traceback.format_exc()
                 observation = f"Error: {e}\nTraceback:\n{tb}"      # Add traceback for more debugging info
@@ -824,13 +910,9 @@ def execute_action(action:str, namespace):
             observations += observation + "\n"
     observation = agent_config.CODING_END
     my_globals.code_so_far += "\n# ----------\n" + code_to_record + "\n# ----------\n"
-    print_to_user(observation, end="")
+    print_to_user(remove_trailing_newline(observation))
     observations += observation
     return observations
-
-# utility
-def timeout_handler(signum, frame):
-    raise TimeoutError("Command execution timed out.")
 
 # add_hash_prefixes("a\nb") -> "# a\n# b"
 def add_hash_prefixes(string):
@@ -867,7 +949,9 @@ def reflect(response_json, planinfo):
     current_step_complete = response_json.get("current_step_complete", False)
     software_bug = response_json.get("software_bug", False)        
     took_shortcuts = response_json.get("took_shortcuts", False)
-    next_action = response_json.get("next_action", False)    		
+    next_action = response_json.get("next_action", False)
+    if next_action == False:
+        logger.debug(f"Yikes! ERROR! Failed to find next_action in response_json = {response_json}!")
     observations = f"\nThought: {thought}\nOverall task complete? {task_complete}\nCurrent step complete? {current_step_complete}\nSoftware bug? {software_bug}\nTook shortcuts? {took_shortcuts}\nNext action: {next_action}\n----------------------------------------\n\n"
 
     # 1. Decide on the next step (new_mode) - could remove this in favor of attending to next_action
@@ -924,8 +1008,6 @@ def reflect(response_json, planinfo):
 #       raise ValueError("next_action should be one of: done, next_step, continue, debug, abort_shortcuts, abort_impossible, replan, {'action':...}")
         new_mode = "retry"
 
-#    print("DEBUG: new_mode =", new_mode)
-    
     # 2. Make an observation summarizing the reflection
     if new_mode in ["done", "abort_shortcuts", "abort_impossible"]:
         runtime_seconds = time.time() - my_globals.start_time if my_globals.start_time else None
@@ -993,6 +1075,36 @@ def update_plan(plan, step_number, step):
 
 # ======================================================================
 
+# Earlier in execute_action(), stdout and stderr is redirected to LoggerTee.
+# LoggerTee (a) writes that output via the logger [which emits to stderr] AND (b) to a capture stream 'f' for later use
+class LoggerTee:
+    """Redirect all writes to a logger (at INFO level) and optionally to a capture buffer."""
+    def __init__(self, logger, *streams):
+        self.logger = logger
+        self.streams = streams
+
+    def write(self, data):
+        if data:
+            if data.endswith("\n"):                                     # This is all to avoid the logger's emit routine adding a newline to each output
+                self.logger.info(remove_trailing_newline(data))		# logger will add the newline back in
+            elif data == ".":                                           # special handling for progress recording...
+#               print("[caught '.']")
+#               if logging.getLogger("panda_logger").getEffectiveLevel() <= logging.INFO:
+                if logger.getEffectiveLevel() <= logging.INFO:                                   
+                    sys.__stderr__.write(data)				# note not to stdout as clashes with MCP
+                    sys.__stderr__.flush()
+            else:
+                self.logger.info(data)
+        for stream in self.streams:
+            stream.write(data)
+            stream.flush()
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+'''
+### OLD VERSION for stdout and buffer
 class Tee:
     """A helper class to write to multiple streams simultaneously."""
     def __init__(self, *streams):
@@ -1006,19 +1118,18 @@ class Tee:
     def flush(self):
         for stream in self.streams:
             stream.flush()
-
+'''
 # ----------             
 
 def print_to_user(*args, **kwargs):
-    print(*args, **kwargs)
-
+    
     # Capture the string
     with io.StringIO() as buffer:
         print(*args, **kwargs, file=buffer)
         output_text = buffer.getvalue()
 
     my_globals.print_so_far += output_text        
-    
+    logger.info(remove_trailing_newline(output_text))	# logger's emit() function adds an extra newline
     if nora_thread_id:
         print_to_nora(output_text)
 
@@ -1046,7 +1157,7 @@ def print_to_nora(output_text):
             nora_system_output = "\n".join(nora_system_output.splitlines()[-n_to_keep:])           # remove all but last n_to_keep lines
         time.sleep(3) 								       # pause for effect...        
 
-    nora_system_output += output_text    
+    nora_system_output += output_text    		# global record of output
     sections = [{"id":"123", "title":title, "tldr":nora_system_output, "text":"Working...", "citations":[]}]
     datas = json.dumps({"actor_id":BOT_USER_UUID, "thread_id":nora_thread_id, "query":title, "sections":sections})
     requests.post(f"{WIDGET_SERVICE_DEV_API_URL}/report", data=datas, timeout=30)
@@ -1061,41 +1172,13 @@ def read_advice_file(filepath=agent_config.ADVICE_FILE):
         with open(filepath, 'r') as file:
             return file.read()
     except FileNotFoundError:
-        print("(No advice file found)")
+        logger.info("(No advice file found)")
         return None
     except Exception as e:
         raise ValueError(f"An error occurred: {e}")
-'''
-def read_advice_file(filepath=agent_config.ADVICE_FILE):
-    """
-    Reads a file containing "IF...THEN..." statements and returns a list of dictionaries.
-    Returns: list: A list of {'if':...,'then':..} dictionaries, where each dictionary represents an "IF...THEN..." pair.
-    """
-    try:
-        with open(filepath, 'r') as file:
-            content = file.read()
-
-        # From o3-mini:            
-        # This regex looks for:
-        #  1. "IF", followed by one or more whitespace characters,
-        #     then lazily captures everything until "THEN".
-        #  2. "THEN" (ignoring case), followed by one or more whitespaces,
-        #     then lazily captures everything until the next "IF" at the start of a line or the end of the file.
-        pattern = re.compile(r"IF\s+(.*?)\s+THEN\s+(.*?)(?=\nIF|\Z)", re.DOTALL)
-        statements = pattern.findall(content)
-
-        result = [{'IF': if_part.strip(), 'THEN': then_part.strip()} for if_part, then_part in statements]
-        return result
-    except FileNotFoundError:
-        print("(No advice file found)")
-        return []
-    except Exception as e:
-        raise ValueError(f"An error occurred: {e}")
-'''
     
 # e.g., get_advice("Review existing architectures and techniques used in LLMs and agents for navigation tasks.")
 def get_advice(step):
-#   print("DEBUG: get_advice. ADVICE =", ADVICE)
     if ADVICE is None:
         return ""
     else:
@@ -1108,11 +1191,8 @@ ONLY describe advice from the IF/THEN rules that is applicable, do NOT generate 
 DO NOT return any additional text, or description of reasoning. Only return the applicable advice, if any.""" + ADVICE
         advice = call_llm(prompt, model=agent_config.PANDA_LLM)
         return advice
-    
 
-
-            
-
-    
-    
+def clear_screen():
+    sys.stdout.write("\033[2J\033[H")
+    sys.stdout.flush()
     

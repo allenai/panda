@@ -10,7 +10,7 @@ from string import Template		# for write_report()
 from . import my_globals
 from .format_dataset import dataset_table_only, dataset_table_legend
 from .format_categories import categories_table_only, categories_table_legend
-from panda.utils import replace_special_chars_with_ascii, call_llm, call_llm_json, get_token_counts, remove_html_markup, extract_html_from_string
+from panda.utils import replace_special_chars_with_ascii, call_llm, call_llm_json, get_token_counts, remove_html_markup, extract_html_from_string, logger
 from . import config as agent_config
 # Below purely to get researchworld.tools.created_datasets and researchworld.tools.created_categories vars (rather than a COPY of those vars at import time, voa from ... import ..)
 #import panda.researchworld.tools as tools
@@ -129,7 +129,7 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
     html_report_template = Template(REPORT_HTML_TEMPLATE)
     txt_report_template = Template(REPORT_TXT_TEMPLATE)    
     report_parameters = {}				# empty dict
-    print(f"\nGenerating report using {model}:\n")
+    logger.info(f"\nGenerating report using {model}:\n")
 
     # get some useful JSON
     make_report_prequeries(report_dialog)
@@ -142,13 +142,13 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
         else:
             prompt += "Return the response in plain text format (including tabulating tables with spaces). Do not use HTML or Markdown."
         report_dialog += [prompt]
-        print("------------ Query -----------------------")
-        print(prompt)
-        print(f"---------- {model} Reponse  ------------------")
+        logger.info("------------ Query -----------------------")
+        logger.info(prompt)
+        logger.info(f"---------- {model} Reponse  ------------------")
         response0 = call_llm(report_dialog, model=model)
         response = replace_special_chars_with_ascii(response0)		# get rid of non-ASCII characters that mess up the display
         report_dialog += [response]
-        print(response[:70], "...", sep="")			# truncate the response when printing to the terminal
+        logger.info("%s...", response[:70])
         report_parameters[section] = response
 
     dataset_named_dataframes, categories_named_dataframes = get_dataframes_for_appendix(report_dialog)
@@ -198,24 +198,22 @@ def summarize_df_with_ellipsis(df):
 
 def make_report_prequeries(report_dialog):    
     # First, reflect on the experiment and gather the experimental results together
-    print("------------ Query -----------------------")
-    print(GATHER_RESULTS_PROMPT)
+    logger.info("------------ Query -----------------------")
+    logger.info(GATHER_RESULTS_PROMPT)
     report_dialog.append(GATHER_RESULTS_PROMPT)
-    print(f"---------- {agent_config.PANDA_LLM} Reponse  ------------------")    
+    logger.info(f"---------- {agent_config.PANDA_LLM} Reponse  ------------------")    
     response_str = call_llm(report_dialog, model=agent_config.PANDA_LLM)
     report_dialog.append(response_str)
-#   print(response_str[:70], "...", sep="")			# truncate the response when printing to the terminal
-    print(response_str)
+    logger.info(response_str)
 
     # Now, reflect on the experiment and gather illustrative examples
-    print("------------ Query -----------------------")
-    print(GATHER_EXAMPLES_PROMPT)
+    logger.info("------------ Query -----------------------")
+    logger.info(GATHER_EXAMPLES_PROMPT)
     report_dialog.append(GATHER_EXAMPLES_PROMPT)
-    print(f"---------- {agent_config.PANDA_LLM} Reponse  ------------------")    
+    logger.info(f"---------- {agent_config.PANDA_LLM} Reponse  ------------------")    
     response_str = call_llm(report_dialog, model=agent_config.PANDA_LLM)
     report_dialog.append(response_str)
-#   print(response_str[:70], "...", sep="")			# truncate the response when printing to the terminal
-    print(response_str)    
+    logger.info(response_str)    
 
 # ----------    
 
@@ -224,7 +222,7 @@ def save_report(html_report, txt_report, filename="report", report_dir=REPORT_DI
 #    tweaked_filename = filename + "_" + date_for_filename if timestamp else filename
 #    report_pathstem = os.path.join(report_dir, tweaked_filename)
 
-    report_pathstem = my_globals.last_report_pathstem
+    report_pathstem = my_globals.report_pathstem
 
     html_report_file = report_pathstem + ".html"
     with open(html_report_file, "w", encoding='utf-8', errors='replace') as file:
@@ -234,24 +232,17 @@ def save_report(html_report, txt_report, filename="report", report_dir=REPORT_DI
     with open(txt_report_file, "w", encoding='utf-8', errors='replace') as file:
         file.write(txt_report)
 
-#    if input_dialog:        
-#        json_report_file = report_pathstem + ".json"		# store the raw input data, minus DataFrames
-#        with open(json_report_file, "w", encoding='utf-8', errors='replace') as f:
-#            json.dump(input_dialog, f, indent=4)    
-
-    my_globals.last_report_pathstem = report_pathstem		# Rather hacky way of making a note if a file was generated
-    print(txt_report)
-    print("----------------------------------------------------------------------")
-    print("Reports written to:")
-    print(" -", html_report_file)
-    print(" -", txt_report_file)
-#    print(" -", json_report_file)        
+    logger.info(txt_report)
+    logger.info("----------------------------------------------------------------------")
+    logger.info("Reports written to:")
+    logger.info(" - %s", html_report_file)
+    logger.info(" - %s", txt_report_file)
     return report_pathstem
 
 # ------------------------------
 
 def convert_html2txt(html_report):
-    print(f"Converting report from HTML to TXT using {agent_config.REPORT_TRANSLATOR_LLM}...")
+    logger.info(f"Converting report from HTML to TXT using {agent_config.REPORT_TRANSLATOR_LLM}...")
     txt_report = call_llm(f"""Convert the following HTML file into plain text. Return just the text, without any commentary before or after.
 ```html
 {html_report}
@@ -260,7 +251,7 @@ def convert_html2txt(html_report):
     return extract_txt_from_string(txt_report)
 
 def convert_txt2html (txt_report):
-    print(f"Converting report from TXT to HTML using {agent_config.REPORT_TRANSLATOR_LLM}...")
+    logger.info(f"Converting report from TXT to HTML using {agent_config.REPORT_TRANSLATOR_LLM}...")
     html_report = call_llm(f"""Format the following text file into HTML. Return just the HTML, without any commentary before or after.
 ```text
 {txt_report}
@@ -357,8 +348,8 @@ def save_dialog(dialog=None, show_system_prompt=True, output_dir=REPORT_DIR, out
         else:
             raise ValueError("No dialog to save! my_globals.dialog_so_far and the argument save_dialog(dialog=<>,..) are both None!")
 
-    if not output_filestem and my_globals.last_report_pathstem:	# INCLUDES output directory
-        output_pathstem = my_globals.last_report_pathstem
+    if not output_filestem:
+        output_pathstem = my_globals.report_pathstem
     else:
         if not output_filestem:
             output_filestem = datetime.datetime.now().strftime("%m-%d-%Y_%H.%M")
@@ -418,12 +409,11 @@ def save_dialog(dialog=None, show_system_prompt=True, output_dir=REPORT_DIR, out
 #        dataframe.to_json(dataset_filename, orient="records", lines=True)		# This WRITES the full dataset to the file
 
     named_vars = get_vars(my_globals.code_so_far)
-#   print("DEBUG: named_vars =", named_vars)
     if named_vars:
         vars_filename = output_pathstem + "-artifacts.py"        
         with open(vars_filename, "w", encoding='utf-8', errors='replace') as file:
             for var_name, var in named_vars:
-                print("Writing artifact", var_name, "to", vars_filename, "...")
+                logger.info(f"Writing artifact {var_name} to {vars_filename}...")
                 if isinstance(var, pd.DataFrame):
                     file.write("\nimport pandas as pd\n")
                     dict_rows = var.to_dict(orient='records')
@@ -434,7 +424,7 @@ def save_dialog(dialog=None, show_system_prompt=True, output_dir=REPORT_DIR, out
                 else:
                     file.write(f"\n{var_name} = {repr(var)}\n\n# ----------\n\n")
 
-    print(f"Dialog, code, and dataframes saved to files {output_pathstem}*")
+    logger.info(f"Dialog, code, and dataframes saved to files {output_pathstem}*")
 
 ### ========================================
 
@@ -489,8 +479,5 @@ Return your answer as a JSON structure of the form:
 #       if var_name in nspace and not isinstance(nspace[var_name],pd.DataFrame)	# SKIP DataFrames (can't print them in a readable way so easily)
         if var_name in nspace
     ]
-#   print("DEBUG: vars found in code:", var_names)
     return named_vars
 
-    
-    

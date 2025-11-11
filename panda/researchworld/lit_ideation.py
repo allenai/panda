@@ -35,7 +35,7 @@ This is done by pre-pending the Panda SYSTEM_PROMPT in the query to GPT, so GPT 
 import csv
 
 from .lit_search import find_paper_ids, get_paper_text, summarize_paper
-from panda.utils import call_llm_json, jprint
+from panda.utils import call_llm_json, jprint, logger
 
 # ----------    
 
@@ -60,9 +60,9 @@ def ideate_task_from_paper(corpus_id):
     paper_text = get_paper_text(corpus_id)
     prompt = task_ideation_prompt(paper_text)
     dialog = [prompt]
-    print(f"Ideating a task based on paper paper:{corpus_id}...")        
+    logger.info(f"Ideating a task based on paper paper:{corpus_id}...")        
     task_json, task_str = call_llm_json(dialog)
-    print("Task:\n", task_str, "\n----------------------------------------\n")
+    logger.info(f"Task:\n{task_str}\n----------------------------------------\n")
     return task_json
 
 # ----------
@@ -75,9 +75,9 @@ def order_tasks(tasks, printout=False):
         i = 0
         for task in tasks:
             i += 1
-            print(f"TASK {i}\n")
+            logger.info(f"TASK {i}\n")
             jprint(task)
-            print("--------------------------")
+            logger.info("--------------------------")
     return tasks
 
 # ----------    
@@ -90,12 +90,12 @@ def score_tasks(tasks):
         try:
             likelihood_score = LIKELIHOODS.index(likelihood)	# 0 (obvious) to N (very unlikely)
         except ValueError:
-            print(f"ERROR! Unrecognized likelihood value '{likelihood}' - scoring it 0")
+            logger.info(f"ERROR! Unrecognized likelihood value '{likelihood}' - scoring it 0")
             likelihood_score = 0
         try:
             significance_score = SIGNIFICANCES.index(significance)	# 0 (insignificant) to N (very significant)
         except ValueError:
-            print(f"ERROR! Unrecognized significance value '{significance}' - scoring it 0")
+            logger.info(f"ERROR! Unrecognized significance value '{significance}' - scoring it 0")
             significance_score = 0
         score = likelihood_score*10 + significance_score		# new: unsure is most important
         task['score'] = score
@@ -135,8 +135,6 @@ def ideate_tasks_from_papers(topic, corpus_ids:list[str], n_papers:int=10, n_tas
         SYSTEM_PROMPT = build_system_prompt()
     dialog = [SYSTEM_PROMPT]
 
-#   print("DEBUG:corpus_ids =", corpus_ids)
-
     summaries = []
     used_corpus_ids = []
     for corpus_id in corpus_ids:				# new: We gather more than n_papers corpus_ids, on the grounds that several won't have summaries
@@ -156,17 +154,17 @@ def ideate_tasks_from_papers(topic, corpus_ids:list[str], n_papers:int=10, n_tas
         ideation_prompt = initial_ideation_prompt if i == 1 else NEXT_IDEATION_PROMPT
 
         dialog += [ideation_prompt]
-        print(f"Ideating task {i}...")
+        logger.info(f"Ideating task {i}...")
         task_json, task_str = call_llm_json(dialog)
         dialog += [task_str]
 
-        print("Assessing likelihood of expected_results...")
+        logger.info("Assessing likelihood of expected_results...")
         dialog += [LIKELIHOOD_PROMPT]
         likelihood_json, likelihood_str = call_llm_json(dialog)
         dialog += [likelihood_str]
         likelihood = likelihood_json['confidence']
 
-        print("Assessing significance of the task...")
+        logger.info("Assessing significance of the task...")
         dialog += [SIGNIFICANCE_PROMPT]
         significance_json, significance_str = call_llm_json(dialog)
         dialog += [significance_str]
@@ -177,7 +175,6 @@ def ideate_tasks_from_papers(topic, corpus_ids:list[str], n_papers:int=10, n_tas
         task_json['significance'] = significance
         task_json['corpus_ids'] = used_corpus_ids
 
-#       print("Task:", task_json['task'])
         jprint(task_json)
 
         tasks += [task_json]
@@ -245,7 +242,7 @@ Example:
      {'task': 'Create a multimodal dataset to test Theory of Mind by combining text-based scenarios...}]
 """
 def ideate_tasks_for_topic(topic:str, n_papers:int=10, n_tasks:int=10):
-    print("Searching for papers on topic:", topic, "...")
+    logger.info(f"Searching for papers on topic: {topic}...")
     corpus_ids = find_paper_ids(topic, n_papers*3)	# -> [{'corpus_id':...,'title':...},...] - *3 as many won't be downloadable
     return ideate_tasks_from_papers(topic, corpus_ids, n_papers=n_papers, n_tasks=n_tasks)	# returns tasks
 
@@ -269,7 +266,7 @@ def ideate_tasks_for_topics_to_csvfile(topics, n_papers=10, n_tasks=10, outfile=
 
     for i in range(0, len(topics)):
         topic = topics[i]
-        print("Topic ", i+1, ": ", topic, sep="")
+        logger.info(f"Topic {i+1}: {topic}")
         tasks = ideate_tasks_for_topic(topic, n_papers=n_papers, n_tasks=n_tasks)
         save_tasks_to_csvfile(topic, tasks, outfile)
 
@@ -302,7 +299,7 @@ def get_highest_id(outfile):
                     if current_id:
                         highest_id = max(highest_id, current_id)
                 except (ValueError, IndexError) as e:
-                    print(f"Warning: Invalid data in CSV: {row}. Skipping. Error: {e}")
+                    logger.info(f"Warning: Invalid data in CSV: {row}. Skipping. Error: {e}")
             return highest_id
 
     except FileNotFoundError:

@@ -130,20 +130,22 @@ def run_task(tid:int, task:str, eval_dir:str=config.DEFAULT_EVAL_DIR):
     target_trace_filestem = f"{target_report_filestem}-trace"
     report_text = None
     try:
-        result, report_pathstem, summary, token_counts = run_panda(task=task, force_report=True)
+#       result_flag, report_pathstem, summary, token_counts = run_panda(task=task, force_report=True)
+        result = run_panda(task=task, force_report=True)
+        result_flag, report_pathstem, summary, token_counts = result["result_flag"], result["report_pathstem"], result["summary"], result["token_counts"]        
         print(f"Evaluation complete for task {tid}!")
         print(f"Panda task: {task}")        
-        print(f"Panda result: {result}")
+        print(f"Panda result: {result_flag}")
         print(f"Panda report file: {target_report_pathstem}.txt")
-        if result == "done":
+        if result_flag == "done":
             os.rename(report_pathstem + ".txt", target_report_pathstem + ".txt")	# panda makes up its own name for a report, so need to change it
             os.rename(report_pathstem + ".html", target_report_pathstem + ".html")            
             report_text = read_file_contents(target_report_pathstem + ".txt")
         save_dialog(output_dir=eval_dir, output_filestem=target_trace_filestem)	# record dialog, even if failure        
     except Exception as e:
         tb = traceback.format_exc()
-        result = f"Panda Python error: {e}!"
+        result_flag = f"Panda Python error: {e}!"
         print(f"Evaluation FAILED for task {tid}.")
-        print(result)
-    return result, report_text, target_report_pathstem
+        print(result_flag)
+    return result_flag, report_text, target_report_pathstem
 

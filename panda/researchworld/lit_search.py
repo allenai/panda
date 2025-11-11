@@ -23,13 +23,14 @@ For example:
 """
 
 import os
+import sys
 import requests
 import json
 import time
 from functools import lru_cache
 
 from . import config     # leave "config." prefix on for now, for clarity
-from panda.utils import call_llm, clean_extract_json, file_exists, read_file_contents, convert_pdf_to_text, download_file
+from panda.utils import call_llm, clean_extract_json, file_exists, read_file_contents, convert_pdf_to_text, download_file, logger
 
 ### ======================================================================
 ###		PAPER SEARCH
@@ -53,7 +54,7 @@ def find_paper_ids(search_query=None, top_k=10, method='paper_finder_infer'):
     cached_results = find_paper_ids_cached(search_query, top_k, method)
     if cached_results is None:
         return None 
-    print(len(cached_results), "papers found.")
+    logger.info(f"{len(cached_results)} papers found.")
     return cached_results
 
 @lru_cache()						    # To cache results, need to return a tuple (not a list of dicts)
@@ -100,21 +101,21 @@ def poll_paper_finder_answers(location_url, top_k=10, max_attempts=20, interval=
         'accept': 'application/json'
         }
     attempts = 0
-    print("Calling paper finder service...", end="")
+    print("Calling paper finder service...", end="", file=sys.stderr)
     while attempts < max_attempts:
         time.sleep(interval)
         try:
             response = requests.get(location_url, headers=headers)	# note GET, not POST
             response_json = json.loads(response.text)
-            print()
+            logger.info("")
             return response_json['document_results'][:top_k]		# [{'corpus_id':..., 'title':'...'}, ...]
         except Exception as e:  # Catch any exception
             attempts += 1
-#           print(f"Attempt {attempts} failed with exception: {e}. Retrying in {interval} seconds...")
-#           print(f"[ paper_finder still working... will poll again in {interval} seconds...]")
-            print(".", end="")						# show progress...
+#           logger.info(f"Attempt {attempts} failed with exception: {e}. Retrying in {interval} seconds...")
+#           logger.info(f"[ paper_finder still working... will poll again in {interval} seconds...]")
+            print(".", end="", file=sys.stderr)						# show progress...
             
-    print(f"Yikes! paper_finder still not finished after {max_attempts * interval} seconds! Giving up....")
+    logger.info(f"Yikes! paper_finder still not finished after {max_attempts * interval} seconds! Giving up....")
     return []  # All attempts failed
 
 # ======================================================================
@@ -143,13 +144,13 @@ def get_paper_text(corpus_id):
     paper_text = None
 
     if file_exists(paper_txt_file):				#
-        print(f"({corpus_id} is already cached)")
+        logger.info(f"({corpus_id} is already cached)")
         paper_text = read_file_contents(paper_txt_file)
         return paper_text
     
     else:
         if file_exists(paper_pdf_file):
-            print(f"({corpus_id} already downloaded)")
+            logger.info(f"({corpus_id} already downloaded)")
         else:
             downloaded = download_paper_pdf(corpus_id, destination=paper_pdf_file)
             if downloaded == False:				# will be None if download temporarily blocked
@@ -157,7 +158,7 @@ def get_paper_text(corpus_id):
                 return ""
 
         if file_exists(paper_pdf_file):	# download successful
-            print("Converting PDF to plain text...")
+            logger.info("Converting PDF to plain text...")
             convert_pdf_to_text(corpus_id, config.PAPER_DIRECTORY)
 
             paper_text = read_file_contents(paper_txt_file)
@@ -171,7 +172,7 @@ def download_paper_pdf(corpus_id, destination):
     # (a) arXiv papers...
     if is_arxiv_id(corpus_id):
         paper_url = config.ARXIV_PDF_URL + corpus_id + ".pdf"
-        print(f"Downloading arXiv:{corpus_id}...")
+        logger.info(f"Downloading arXiv:{corpus_id}...")
         download_file(paper_url, destination)	# TO ADD: suppose this fails?
         return True
 
@@ -182,20 +183,20 @@ def download_paper_pdf(corpus_id, destination):
         if url_data_json:
             paper_url = url_data_json.get("url")
             paper_title = paper_data_json.get("title")
-            print(f"Downloading CorpusID:{corpus_id} {paper_title}...")
+            logger.info(f"Downloading CorpusID:{corpus_id} {paper_title}...")
             download_file(paper_url, destination)	# TO ADD: suppose this fails?                
             return True
         else:
-            print(f"CorpusID:{corpus_id} doesn't seem to have an associated URL - can't download.")
+            logger.info(f"CorpusID:{corpus_id} doesn't seem to have an associated URL - can't download.")
             return False
     elif "isOpenAccess" in paper_data_json:		# will have value False
-        print(f"CorpusID:{corpus_id} is not Open Access - can't download.")
+        logger.info(f"CorpusID:{corpus_id} is not Open Access - can't download.")
         return False
     elif paper_data_json == {}:
-        print("No details retrievable from S2 (Rate limits blocking?) - giving up...")
+        logger.info("No details retrievable from S2 (Rate limits blocking?) - giving up...")
         return None
     else:
-        print("Failed to get paper for some unknown reason!")
+        logger.info("Failed to get paper for some unknown reason!")
         return None            
 
 # ----------
@@ -236,14 +237,14 @@ def summarize_paper(corpus_id=None):
     id_type = "arXiv" if is_arxiv_id(corpus_id) else "CorpusID" 
     
     if file_exists(paper_summary_file):				#
-        print(f"(Summmary of {id_type}:{corpus_id} is already cached)")
+        logger.info(f"(Summmary of {id_type}:{corpus_id} is already cached)")
         with open(paper_summary_file, 'r') as file:
             return file.read()        
     else:        
         text = get_paper_text(corpus_id)
         if text:
             prompt =  SUMMARY_PRETEXT_PROMPT + text + SUMMARY_POSTTEXT_PROMPT
-            print(f"Summarizing paper {id_type}:{corpus_id}...")
+            logger.info(f"Summarizing paper {id_type}:{corpus_id}...")
             response = call_llm(prompt)
             response = "\n--------------------------------------------------\n          Summary of paper\n--------------------------------------------------\n\n" + response
 #           with open(paper_summary_file, "w") as f:
@@ -251,7 +252,7 @@ def summarize_paper(corpus_id=None):
                 f.write(response)
             return response
         else:
-#           print(f"(No text found or {id_type}:{corpus_id})")
+#           logger.info(f"(No text found or {id_type}:{corpus_id})")
             return None
 
 SUMMARY_PRETEXT_PROMPT = """
@@ -314,7 +315,7 @@ Example:
 def ask_paper(corpus_id, question):
     paper_text = get_paper_text(corpus_id)
     if not paper_text:
-        print(f"ERROR! Paper {corpus_id} has no associated text!")
+        logger.info(f"ERROR! Paper {corpus_id} has no associated text!")
         return ""
     prompt = """Read the following paper then ask the question at the end:
 ======================================================================
@@ -363,39 +364,38 @@ def get_paper_details(corpus_id:str, fields=["title","isOpenAccess","openAccessP
 #       'Authorization': f'Bearer {config.S2_API_KEY}'
         'x-api-key': config.S2_API_KEY
     }
-#    print("DEBUG: http_call =", http_call)
     for attempt in range(0,max_retries):
         try:
             response = requests.get(http_call, headers=headers)
             response_str = response.text
             response_json = clean_extract_json(response_str)
             if "code" in response_json and response_json["code"] == "429":  # Rate limited
-                print(f"Rate limited (429). Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
+                logger.info(f"Rate limited (429). Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
                 time.sleep(retry_delay)  # Pause before retrying
                 continue  # Go to the next iteration of the loop (try again)
             elif response.status_code!= 200: # Any other bad status
-                print(f"S2 Error {response.status_code} for CorpusId {corpus_id}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
+                logger.info(f"S2 Error {response.status_code} for CorpusId {corpus_id}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
                 time.sleep(retry_delay)  # Pause before retrying
                 continue  # Go to the next iteration of the loop (try again)
             else:
                 break     # from the for... loop and continue
         except requests.exceptions.RequestException as e:  # Catch network errors
-            print(f"Request exception: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
+            logger.info(f"Request exception: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
             time.sleep(retry_delay)
             continue
         except json.JSONDecodeError as e:  # Catch JSON errors
-            print(f"JSON decode error: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
+            logger.info(f"JSON decode error: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
             time.sleep(retry_delay)
             continue
         except Exception as e: # Catch any other exception
-            print(f"An unexpected error has occurred: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
+            logger.info(f"An unexpected error has occurred: {e}. Retrying in {retry_delay} seconds (attempt {attempt+1}/{max_retries})...")
             time.sleep(retry_delay)
             continue
     else:  # Loop finished without success (all retries exhausted)
-        print(f"Max retries ({max_retries}) reached for corpus ID: {corpus_id}. Giving up...")
+        logger.info(f"Max retries ({max_retries}) reached for corpus ID: {corpus_id}. Giving up...")
         response_json = {}
     
-#   print("Success!! response_json =", response_json)
+#   logger.info("Success!! response_json = %s", response_json)
     return response_json
 
 ### ======================================================================
@@ -409,7 +409,7 @@ def get_corpus_ids(paper_jsons):
         elif 'arxiv' in paper_json:
             corpus_ids += [paper_json['arxiv']]
         else:
-            print("ERROR! Can't find corpus_id or arxiv in the below paper JSON. Skipping...\n", paper_json)
+            logger.info("ERROR! Can't find corpus_id or arxiv in the below paper JSON. Skipping...\n%s", paper_json)
     return corpus_ids
 
 ### ----------

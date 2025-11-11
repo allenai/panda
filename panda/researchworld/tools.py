@@ -1,16 +1,8 @@
 
-"""
-To make tools accessible in iPython at the top-level do: 
-
-from panda.researchworld import *
-from panda.utils import *
-from panda.panda_agent import *
-"""
-
 import pandas as pd
 import os
 
-from panda.utils import llm_list, map_dataframe, map_dataframe_json, map_dataframe_multiple_choice
+from panda.utils import llm_list, map_dataframe, map_dataframe_json, map_dataframe_multiple_choice, logger
 from . import config                                   # access config.doc var
 from panda.utils import config as utils_config      # access config.doc var in the sibling package
 from panda.panda_agent import config as agent_config
@@ -49,13 +41,13 @@ def create_dataset(prompt, item_col='question', temperature:int=0):
     global created_datasets    
     questions = llm_list(prompt, temperature=temperature)
     dataset = pd.DataFrame({item_col: questions})
-    print(dataset)
+    logger.info(dataset)
     created_datasets += [dataset]
     return dataset
 
 # ----------------------------------------
 
-config.doc['answer_questions'] = """
+config.doc['answer_questions'] = f"""
 def answer_questions(dataset:pd.DataFrame, prompt_template:str, answer_col:str, model:str):
 Purpose:
     For every row in the dataset, query the model with the instantiated prompt_template, and put answers under a new column called answer_col.
@@ -63,25 +55,25 @@ Args:
     dataset (DataFrame): the dataset, containing items (e.g., questions) under a particular column (e.g., 'question')
     prompt_template (str): The template prompt to query model with. The template reference the item column
     answer_col (str): The DataFrame column to place the answers in
-    model (str): The model to query. For now, valid answers are 'gpt4', 'gpt-4.1', 'gpt-4.1-nano', 'llama', 'mistral', 'claude', 'o1-mini', 'o3-mini', 'o4-mini'
+    model (str): The model to query. Valid model names are: {utils_config.MODEL_NAMES}
 Returns:
     DataFrame: The dataset DataFrame updated with the answers. (Note: the dataset Dataframe is destructively updated)
 Example:
-    dataset = pd.DataFrame([{'question':'What is 1 + 1?'}, {'question':'What is 2 + 2?'}])
-    answer_questions(dataset, "Answer this question: {question}", answer_col='answer', model='llama')
+    dataset = pd.DataFrame([{{'question':'What is 1 + 1?'}}, {{'question':'What is 2 + 2?'}}])
+    answer_questions(dataset, "Answer this question: {{question}}", answer_col='answer', model='llama')
     print(dataset)
  ->          question answer
     0  What is 1 + 1?      2
     1  What is 2 + 2?      4
 """
 def answer_questions(dataset:pd.DataFrame, prompt_template:str, answer_col:str, model=agent_config.PANDA_LLM):
-#   print("prompt_template =", prompt_template)
+#   logger.info("prompt_template =", prompt_template)
     map_dataframe(dataset, prompt_template=prompt_template, output_col=answer_col, model=model)
-    print(dataset)    
+    logger.info(dataset)    
 
 # ----------------------------------------
 
-config.doc['answer_questions_multiple_choice'] = """
+config.doc['answer_questions_multiple_choice'] = f"""
 def answer_questions_multiple_choice(dataset:pd.DataFrame, prompt_template:str, options, answer_col:str, model:str):
 Purpose:
     Same as answer_questions, except answers are constrained to options.
@@ -91,12 +83,12 @@ Args:
     prompt_template (str): The template prompt to query model with. The template reference the item column
     options (list(str)): The allowed answer options
     answer_col (str): The DataFrame column to place the answers in
-    model (str): The model to query. For now, valid answers are 'gpt4', 'llama', and 'mistral'
+    model (str): The JSON-capable model to query. Valid model names are: {utils_config.JSON_CAPABLE_MODEL_NAMES}
 Returns:
     DataFrame: The dataset DataFrame updated with the answers. (Note: the dataset Dataframe is destructively updated)
 Example:
-    dataset = pd.DataFrame([{'question':'Is water wet?'}, {'question':'Can birds fly?'}])
-    answer_questions_multiple_choice(dataset, "Answer this: {question}", options=["yes","no"], answer_col='answer', model='llama')
+    dataset = pd.DataFrame([{{'question':'Is water wet?'}}, {{'question':'Can birds fly?'}}])
+    answer_questions_multiple_choice(dataset, "Answer this: {{question}}", options=["yes","no"], answer_col='answer', model='llama')
     print(dataset)
     ->          question answer
     0   Is water wet?    yes
@@ -104,11 +96,11 @@ Example:
 """
 def answer_questions_multiple_choice(dataset:pd.DataFrame, prompt_template:str, options, answer_col:str, model=agent_config.PANDA_LLM):
     map_dataframe_multiple_choice(dataset, prompt_template=prompt_template, options=options, output_col=answer_col, model=model)
-    print(dataset)        
+    logger.info(dataset)        
 
 # ----------------------------------------
 
-config.doc['score_answers'] = """
+config.doc['score_answers'] = f"""
 def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', score_range=10, model:str=agent_config.PANDA_LLM):    
 Purpose:
     Use model (LM-as-judge) to score a set of answers in dataset. Scores are added to the dataset DataFrame.
@@ -119,13 +111,13 @@ Args:
     prompt_template (str): Describes how to score individual answers in each row of the dataset
     score_col (str): The column to put the scores in (default 'score').
     score_range (int): The range of scores, e.g., if scores are 0 to 10, then the score_range is 10. This is used for score normalization.
-    model (str) (optional): The model to do the scoring. Valid models are 'gpt4', 'o1-mini' and 'o3-mini'.
+    model (str): The JSON-capable model to do the scoring. Valid model names are: {utils_config.JSON_CAPABLE_MODEL_NAMES}
 Returns:
-    DataFrame: The dataset DataFrame updated with the scores in score_col, and also a justification in column {score_col}_justification
+    DataFrame: The dataset DataFrame updated with the scores in score_col, and also a justification in column {{score_col}}_justification
 Example:
-    dataset = pd.DataFrame([{"question":"What is the sum of 34 and 21?","answer":"The sum of 34 and 21 is 55."},
-                            {"question":"Add 58 and 36 together.","answer":"Add 58 and 36: 94."}])
-    score_answers(dataset, "Score the answer to the following question between 0 (completely wrong) and 10 (completely correct):\nQuestion: {question}\nAnswer: {answer}", score_col='score', score_range=10)
+    dataset = pd.DataFrame([{{"question":"What is the sum of 34 and 21?","answer":"The sum of 34 and 21 is 55."}},
+                            {{"question":"Add 58 and 36 together.","answer":"Add 58 and 36: 94."}}])
+    score_answers(dataset, "Score the answer to the following question between 0 (completely wrong) and 10 (completely correct):\nQuestion: {{question}}\nAnswer: {{answer}}", score_col='score', score_range=10)
     print(dataset)
                         question                       answer    score                                                   score_justification
 0  What is the sum of 34 and 21?  The sum of 34 and 21 is 55. 1.000000  The answer is completely correct. The sum of 34 and 21 is indeed 55.
@@ -136,7 +128,7 @@ def score_answers(dataset:pd.DataFrame, prompt_template:str, score_col='score', 
     map_dataframe_json(dataframe=dataset, prompt_template=prompt_template, json_template=score_template_json, model=model)
     dataset[score_col] = dataset[score_col]/score_range            ## Normalize the score to be range 0-1
     dataset[score_col] = pd.to_numeric(dataset[score_col]) 	   ## coerce score to be numeric
-    print(dataset)
+    logger.info(dataset)
     
 ### ======================================================================
 ###	Qualitative interpretation of stats
@@ -231,10 +223,10 @@ def pearson_strength(pearson_corr:float):
 def save_documentation(docfile=config.FUNCTION_DOC_FILE):
     with open(docfile, 'w') as file:
         file.write(get_function_documentation())
-    print(f"Documentation written out to {docfile}.")
+    logger.info(f"Documentation written out to {docfile}.")
 
 def get_function_documentation():
-#   print("DEBUG: config.doc =", config.doc)
+#   logger.info("DEBUG: config.doc = %s", config.doc)
     DIVIDER = "\n----------------------------------------\n"    
     documentation = ("""
 USEFUL PYTHON FUNCTIONS
@@ -294,9 +286,9 @@ def extract_plan_from_workflow(workflow_doc_file=config.WORKFLOW_DOC_FILE, plan_
                     else:
                         outfile.write(trimmed_line)
     except FileNotFoundError:
-        print(f"Error: File '{workflow_doc_file}' not found.")
+        logger.info(f"Error: File '{workflow_doc_file}' not found.")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.info(f"An error occurred: {e}")
 
                    
                 

@@ -1,10 +1,13 @@
 
 import os
 from panda.panda_agent import config as agent_config
+from panda.utils import logger
 
 # global var to store the tool documentation in
 doc = {}
 
+MAX_N_SAMPLE = 5         # The number of best and worst examples to show in the prompt when asking for good/bad categories
+MAX_ITEMS_TO_CATEGORIZE = 100		# when sorting examples into those ideated categories
 
 LLM_AS_JUDGE = agent_config.PANDA_LLM
 
@@ -19,7 +22,7 @@ PLAN_DOC_FILE = os.path.join(MODULE_DIR, "documentation_plans.txt")
 
 S2_API_KEY = os.environ.get("S2_API_KEY")
 if S2_API_KEY is None:
-    print("Optional: Please set your S2_API_KEY environment variable (if you want to use paper search functions)!")
+    logger.info("Optional: Please set your S2_API_KEY environment variable (if you want to use paper search functions)!")
 
 # ==================================================
 # Globals for literature search - Not in use yet

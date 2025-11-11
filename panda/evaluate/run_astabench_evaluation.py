@@ -1,12 +1,8 @@
 
 """
+panda.evaluate.run_astabench_evaluation.run_astabench()
+
 NOTE: If the results file already exists, this function will skip that eval (won't redo it)
-
-def redo_dev():
-    panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/dev_may_2025.json", results_dir="panda_easy_dev_results_gpt41", allow_shortcuts=True)
-    panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/dev_jun_2025_harpa.json", results_dir="panda_harpa_dev_results", allow_shortcuts=True)
-
-panda.run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/asta-bench/astabench/evals/e2e_discovery/test_jun_2025_harpa.json", results_dir="panda_harpa_test_results", allow_shortcuts=True)
 
 TARGETS = ["idea-98-simplified","idea-100-simplified","idea-127-simplified","idea-134-simplified","idea-141-simplified","idea-173-simplified","idea-177-simplified","idea-189-simplified","idea-301-simplified","idea-304-simplified","idea-361-simplified"]
 
@@ -57,6 +53,17 @@ from panda.panda_agent import my_globals         # leave "my_globals." prefix on
 from panda.panda_agent import panda_agent_subprompts
 import panda.researchworld.tools as tools
 import panda.researchworld.ideate_categories as ideate_categories
+
+# panda.evaluate.run_astabench_evaluation.run_astabench()
+def run_astabench():
+    print("NOTE: Doing easy dev...")
+    run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/Panda/astabench_e2e_discovery/dev_may_2025.json", results_dir="panda_easy_dev_results_gpt5", allow_shortcuts=True)
+    print("NOTE: Doing hard dev...")    
+    run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/Panda/astabench_e2e_discovery/dev_jun_2025_harpa.json", results_dir="panda_hard_dev_results_gpt5", allow_shortcuts=True)
+    print("NOTE: Doing easy test...")
+    run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/Panda/astabench_e2e_discovery/test_may_2025.json", results_dir="panda_easy_test_results_gpt5", allow_shortcuts=True)
+    print("NOTE: Doing hard test...")    
+    run_astabench_tasks(task_file="c://users/peter/Dropbox/Desktop/2025/Panda/astabench_e2e_discovery/test_jun_2025_harpa.json", results_dir="panda_hard_test_results_gpt5", allow_shortcuts=True)
 
 ### ======================================================================
 ###	1. RUN ASTABENCH TASKS
@@ -164,34 +171,37 @@ def run_astabench_task(tid:int, task_and_json:str, results_dir=ASTABENCH_RESULTS
             return
         else:
             print("Task", tid, "NOT successful (status:", done_flag, ") - deleting attempt and retrying...")
-            for filepath in glob.glob(target_report_pathstem + '-*'):	# e.g., idea3-trace.txt
-                if os.path.isfile(filepath):  # Ensure it's a file, not a directory
-                    os.remove(filepath)
-                    print(f"Deleted: {filepath}")
-            for filepath in glob.glob(target_report_pathstem + '.*'):	# e.g., idea3.{txt,py,...}
-                if os.path.isfile(filepath):  # Ensure it's a file, not a directory
-                    os.remove(filepath)
-                    print(f"Deleted: {filepath}")
+
+    print("Deleting any old files from partial prior runs...")            
+    for filepath in glob.glob(target_report_pathstem + '-*'):	# e.g., idea3-trace.txt
+        if os.path.isfile(filepath):  # Ensure it's a file, not a directory
+            os.remove(filepath)
+            print(f"Deleted: {filepath}")
+    for filepath in glob.glob(target_report_pathstem + '.*'):	# e.g., idea3.{txt,py,...}
+        if os.path.isfile(filepath):  # Ensure it's a file, not a directory
+            os.remove(filepath)
+            print(f"Deleted: {filepath}")
     
     try:
         
         # ========================================
         # Note: allow_shortcuts=True means Panda *doesn't* check for faking bits it can't manage, and instead allows it to always try its hardest...
-        result, report_pathstem, summary, token_counts = run_panda(task=task, force_report=True, allow_shortcuts=allow_shortcuts, model=model)	# where the action happens!!!!
+        result = run_panda(task=task, force_report=True, allow_shortcuts=allow_shortcuts, model=model)	# where the action happens!!!!
+        result_flag, report_pathstem, summary, token_counts = result["result_flag"], result["report_pathstem"], result["summary"], result["token_counts"]
 
         # ========================================
         
         print(f"Evaluation complete for task {tid}!")
         print(f"Panda task: {task}")        
-        print(f"Panda result: {result}")
+        print(f"Panda result: {result_flag}")
         print(f"Panda report file: {target_report_pathstem}.txt")
 
         # [1] Write out the "done" flag
         with open(os.path.join(results_dir, target_done_filestem + ".txt"), "w", encoding="utf-8") as file:
-            file.write(result+"\n")
+            file.write(result_flag+"\n")
 
         # [2] Write out (copy) the report files (txt, html)            
-        if result == "done":
+        if result_flag == "done":
             shutil.copy(report_pathstem + ".txt", target_report_pathstem + ".txt")	# panda makes up its own name for a report, so need to change it
             shutil.copy(report_pathstem + ".html", target_report_pathstem + ".html")
 

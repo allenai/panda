@@ -3,15 +3,15 @@ import json
 import re
 from html.parser import HTMLParser
 import unicodedata
+from .logger import logger
 
 def clean_extract_json(string):
-#   print("DEBUG: string =", string)
     try:
 #       return clean_keys(json.loads(string))
         return clean_keys(extract_json_from_string(string))    
     except Exception as e:
         message = f"Error: {e}\nFailed to parse JSON string:\n{repr(string)}\n(Answer from LLM too long/complex? Try a simpler question/query to the LLM)"
-        print(message)
+        logger.info(message)
         raise ValueError(message)
 
 # Courtesy Gemini
@@ -41,7 +41,7 @@ def extract_html_from_string(text):
     if match:
         return match.group(1)
     else:
-        print("Yikes! Couldn't find any HTML in string! Returning it directly...")
+        logger.info("Yikes! Couldn't find any HTML in string! Returning it directly...")
         return text
 
 # ----------    
@@ -222,9 +222,19 @@ def similar_strings(str1, str2):
 
 # Shorthand for pretty-printing JSON objects (or lists of JSON objects)
 def jprint(json_item):
-    print(json.dumps(json_item,indent=2))
+    logger.info(json.dumps(json_item,indent=2))
 
 # printf() instead of print() is a repeated  misconception of GPT4.1 so let's define it to reduce trivial errors
 # or could simply do printf = print, apparently, as functions are first-class objects    
-def printf(format_str, *args):
-    print(format_str % args)
+#def printf(format_str, *args):
+#    print(format_str % args)
+
+# logger automatically adds a newline when printing    
+def remove_trailing_newline(s: str) -> str:
+    """Remove a single trailing newline (\\n or \\r\\n) from the end of the string, if present."""
+    if s.endswith("\r\n"):
+        return s[:-2]
+    elif s.endswith("\n") or s.endswith("\r"):
+        return s[:-1]
+    else:
+        return s

@@ -6,6 +6,7 @@ import shutil	# for copy_file
 
 
 from .utils import replace_special_chars_with_ascii
+from .logger import logger
 
 # ======================================================================
 #		READ FILE 
@@ -26,7 +27,7 @@ def read_file_contents(filename):
       contents = file.read()
       return contents
   except FileNotFoundError:
-    print(f"Error: File '{filename}' not found.")
+    logger.error(f"Error: File '{filename}' not found.")
     return None
 
 """
@@ -71,7 +72,7 @@ def download_file(url=None, filepath=None):
         return filepath
 
     except Exception as e:
-        print(f"Error downloading file from {url}: {e}")
+        logger.error(f"Error downloading file from {url}: {e}")
         return None
 
 ### ======================================================================
@@ -79,7 +80,7 @@ def download_file(url=None, filepath=None):
 ### ======================================================================
 
 # o1's version
-
+# convert_pdf_to_text("more_human_than_human.pdf", "../bias-experiments")
 def convert_pdf_to_text(filestem, directory):
     # Construct the full paths to the PDF and the output text file
     pdf_path = os.path.join(directory, f"{filestem}.pdf")
@@ -87,7 +88,7 @@ def convert_pdf_to_text(filestem, directory):
     
     # Check if the PDF file exists
     if not os.path.exists(pdf_path):
-        print(f"PDF file '{pdf_path}' does not exist.")
+        logger.error(f"PDF file '{pdf_path}' does not exist.")
         return
     
     try:
@@ -99,9 +100,9 @@ def convert_pdf_to_text(filestem, directory):
         with open(txt_path, 'w', encoding='utf-8') as txt_file:
             txt_file.write(clean_text)
         
-        print(f"Successfully converted '{pdf_path}' to '{txt_path}'.")
+        logger.info(f"Successfully converted '{pdf_path}' to '{txt_path}'.")
     except Exception as e:
-        print(f"An error occurred while converting the PDF: {e}")
+        logger.error(f"An error occurred while converting the PDF: {e}")
 
 # ======================================================================
 #		WIPE A DIRECTORY (Courtesy Gemini)
@@ -114,16 +115,16 @@ def clear_directory(directory_path):
             file_path = os.path.join(directory_path, filename) # Create the full file path
             if os.path.isfile(file_path):  # Check if it's a file
                 os.remove(file_path)  # Remove the file
-                print(f"Removed file: {file_path}")
+                logger.info(f"Removed file: {file_path}")
             # If you also want to remove subdirectories, uncomment the next two lines:
             #elif os.path.isdir(file_path):
             #    shutil.rmtree(file_path)
-            #    print(f"Removed directory: {file_path}")
-        print(f"All files in '{directory_path}' removed.")
+            #    logger.info(f"Removed directory: {file_path}")
+        logger.info(f"All files in '{directory_path}' removed.")
     except FileNotFoundError:
-        print(f"Directory '{directory_path}' not found (so is already clear).")
+        logger.info(f"Directory '{directory_path}' not found (so is already clear).")
     except Exception as e:
-        print(f"Error removing files in '{directory_path}': {e}")
+        logger.error(f"Error removing files in '{directory_path}': {e}")
 
 # ======================================================================
 #	 COPY A FILE
@@ -139,10 +140,10 @@ def copy_file(source_path, destination_path):
     """
     try:
         shutil.copy2(source_path, destination_path)  # copy2 preserves metadata
-        print(f"File copied successfully from {source_path} to {destination_path}")
+        logger.info(f"File copied successfully from {source_path} to {destination_path}")
     except FileNotFoundError:
-        print(f"Error: Source file not found at {source_path}")
+        logger.error(f"Error: Source file not found at {source_path}")
     except PermissionError:
-        print(f"Error: Permission denied. Check read/write permissions for source and destination.")
+        logger.error(f"Error: Permission denied. Check read/write permissions for source and destination.")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        logger.error(f"An unexpected error occurred: {e}")
