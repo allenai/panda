@@ -70,8 +70,7 @@ run_panda(task=None, background_knowledge=None, plan=None, force_report=False, t
 ```
 
 3.4 Via MCP, linked to Cursor
-See panda/mcp.json
-Connection is .cursor/mcp.json -> run_panda.bat -> python[that contains panda environment] panda.mcp_server (which imports panda) -> panda.run_panda()
+Edit panda/mcp.json appropriately to point to the Python containing the Panda library files, then place in the ~/.cursor/ folder. Connection is .cursor/mcp.json -> python[that contains panda environment] panda.mcp_server (which imports panda) -> panda.run_panda()
 
 ## Examples
 
