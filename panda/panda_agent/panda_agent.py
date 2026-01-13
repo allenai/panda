@@ -90,7 +90,7 @@ from panda.researchworld.lit_ideation import *
 # from .superpanda import run_superpanda
 # from .iterpanda import run_iterpanda
 # from .cursor_panda import run_cursor_panda
-from .superpanda_interactive import run_superpanda_interactive
+# from .superpanda_interactive import run_superpanda_interactive
 
 # ----------------------------------------
 
