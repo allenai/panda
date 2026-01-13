@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='panda',
-    version='1.4.9',
+    version='1.4.10',
     packages=find_packages(),  # Automatically finds all packages like panda_agent, utils
     install_requires=[
         "requests",

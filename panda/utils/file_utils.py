@@ -3,7 +3,8 @@ import requests
 import os
 from pdfminer.high_level import extract_text
 import shutil	# for copy_file
-
+import re
+from typing import Optional, Tuple
 
 from .utils import replace_special_chars_with_ascii
 from .logger import logger
@@ -147,3 +148,10 @@ def copy_file(source_path, destination_path):
         logger.error(f"Error: Permission denied. Check read/write permissions for source and destination.")
     except Exception as e:
         logger.error(f"An unexpected error occurred: {e}")
+
+# ----------
+
+def add_to_end_of_file(string, file):
+     with open(file, "a", encoding="utf-8", errors='ignore') as file:
+        file.write(string)
+

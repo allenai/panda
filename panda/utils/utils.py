@@ -238,3 +238,37 @@ def remove_trailing_newline(s: str) -> str:
         return s[:-1]
     else:
         return s
+
+# ------------------------------
+
+def strip_trailing_question(text: str) -> str:
+    """
+    Removes the final trailing question (including Markdown formatting) 
+    if the final sentence is a question. Returns the cleaned text.
+    """
+    original = text.rstrip()
+
+    # Pattern to capture a trailing question sentence (optionally wrapped in markdown)
+    # Handles cases like:
+    #   What do you want to do next?
+    #   **What do you want to do next?**
+    #   *What do you want to do next?*
+    #   ## What do you want to do next?
+    md_opt = r'(?:[*_#\s]*)'   # Optional markdown stars, underscores, headers, spaces
+    question_pattern = (
+        rf"{md_opt}"           # Leading markdown
+        r"([^\n]*\?)"          # The question sentence
+        rf"{md_opt}$"          # Optional markdown after
+    )
+
+    # Try to find a final question at the end
+    match = re.search(question_pattern, original)
+
+    if match:
+        # Remove the entire matched question block
+        cleaned = original[:match.start()].rstrip()
+        return cleaned
+
+    # If no terminal question found, return original text
+    return original
+

@@ -346,7 +346,7 @@ Args:
 Returns:
     A JSON dict of field:value pairs for each field requested
 Example:
-    get_paper_details('253098632', ['title','authors','yeaar','venue'])
+    get_paper_details('253098632', ['title','authors','year','venue'])
 ->  {'paperId': '311fd5f6f114ae51f8cbd95a0da69d7b556d25f1',
      'title': 'Neural Theory-of-Mind? On the Limits of Social Intelligence in Large LMs',
      'year': 2022,
@@ -364,6 +364,8 @@ def get_paper_details(corpus_id:str, fields=["title","isOpenAccess","openAccessP
 #       'Authorization': f'Bearer {config.S2_API_KEY}'
         'x-api-key': config.S2_API_KEY
     }
+    print("http_call =", http_call)
+    print("headers =", headers)
     for attempt in range(0,max_retries):
         try:
             response = requests.get(http_call, headers=headers)

@@ -9,7 +9,7 @@ def setup_logger():
     logger = logging.getLogger("panda_logger")
 #   logger.setLevel(logging.INFO)
     logger.setLevel(logging.DEBUG)
-    logger.format="%(message)s",       # only show the message text    
+#   logger.format="%(message)s"       # only show the message text    
     logger.handlers.clear()
 
     if LOGGER_FILE:
@@ -32,6 +32,8 @@ logging.getLogger("panda_logger").propagate = False
 
 # utility to switch off logging for a function call:
 # example: with_quiet_logging(do_research_task, task="What is 1 + 1?")
+# USAGE: Used by LiteLLM call in utils/ask_llm.py:
+#            response = with_quiet_logging(completion, model=model, messages=messages)	# suppress LiteLLM logs which mess up MCP stream somehow
 def with_quiet_logging(fn, *args, **kwargs):
     root = logging.getLogger()
     old_level = root.level

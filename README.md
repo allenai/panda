@@ -188,6 +188,7 @@ The step counter ensures that the plan is followed systematically without skippi
  * v1.4.6: Package result outputs into a subdirectory, bug fixes
  * v1.4.8: Rename package as Panda ("plan-and-act")
  * v1.4.9: Add MCP interface (panda/mcp_server.py) and command line execution (python run_panda.py "What is 1 + 1?")
+ * v1.4.10: Add superpanda_interactive.py (exploratory), minor code updates
 
 # Questions, Issues, and Further Information
 

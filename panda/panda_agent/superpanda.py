@@ -67,7 +67,7 @@ Processing the first item causes ideation of possible mechanisms:
    {'task':'Test Olmo on math', 'report_pathstem':'output/my_report', 'finding':'bad at calculus', 'next_step':'mechanisms'},
    {'task':'Test Olmo on math', 'report_pathstem':'output/my_report', 'finding':'bad at addition', 'next_step':'mechanisms'}]
 
-and so on. 
+and so on. Each agenda item is essentially a branch of the growing tree. (In an ideal world, we might just have a single tree).
 
 Agenda items are scored (using GPT-as-scorer) and the highest-scoring (most promising) agenda_item worked on next.
 
@@ -628,6 +628,10 @@ class Conjectures(BaseModel):
 ### ======================================================================
 ###                3. CONJECTURE TESTS
 ### ======================================================================
+"""
+Returns a LIST:
+[{"title":<string>, "description":<string>, "key_measurements":<string>, "expected_results_if_true":<string>, "expected_results_if_false":<string>},..]}
+"""
 
 def conjecture_tests(mechanism, dialog):
     prompt = f"""

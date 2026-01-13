@@ -137,7 +137,7 @@ from pydantic import BaseModel, Field
 
 from . import config as agent_config
 from . import my_globals         # for my_globals.print_so_far from panda
-from panda.utils import call_llm, call_llm_json, read_file_contents, clear_directory, copy_file, file_exists, multiline_input, logger
+from panda.utils import call_llm, call_llm_json, read_file_contents, clear_directory, copy_file, file_exists, multiline_input, logger, add_to_end_of_file
 
 # ----------
 
@@ -339,10 +339,6 @@ Do not provide any additional information, only provide EXACTLY what should be a
 
 #------------------------------
 
-def add_to_end_of_file(string, file):
-    with open(file, "a", encoding="utf-8", errors='ignore') as file:
-        file.write(string)
-
 # ======================================================================
 #	RUN THE ACTUAL EXPERIMENT
 # ======================================================================        
@@ -356,9 +352,9 @@ def run_iterpanda_experiment(task, background_knowledge=None, model=agent_config
     
 # TEMP PATCH
 # result = {'result_flag':'done', 'report_pathstem':'c:/Users/peter/Dropbox/Desktop/2025/Panda/panda/output_iterpanda/experiment-20251021-135153/experiment', 'summary':'''This comprehensive analysis of 48 political questions across 6 dimensions definitively demonstrates that Claude 3.5 exhibits systematic liberal bias, with 100% of responses scoring as liberal-leaning (mean score -11.1 on a -10 to +10 scale) and zero neutral or conservative responses detected. The bias is extreme in magnitude, highly consistent across all political dimensions, and statistically significant (p < 0.001), with the strongest liberal positions appearing on environmental policy and social issues.''', 'token_counts':[{'model': 'claude-sonnet-4-20250514', 'prompt_tokens': 1642543, 'completion_tokens': 87210, 'total_tokens': 1729753}, {'model': 'claude-3-5-sonnet-20240620', 'prompt_tokens': 2440, 'completion_tokens': 25403, 'total_tokens': 27843}, {'model': 'gpt-4.1', 'prompt_tokens': 35001, 'completion_tokens': 8348, 'total_tokens': 43349}]}
+# [1]   run_panda(task, background_knowledge=background_knowledge, reset_namespace=False, reset_dialog=False, force_report=force_report, allow_shortcuts=ALLOW_SHORTCUTS, model=model, outputs_dir="output_iterpanda")
 
     result_flag, report_pathstem, summary, token_counts = result["result_flag"], result["report_pathstem"], result["summary"], result["token_counts"]            
-# [1]   run_panda(task, background_knowledge=background_knowledge, reset_namespace=False, reset_dialog=False, force_report=force_report, allow_shortcuts=ALLOW_SHORTCUTS, model=model, outputs_dir="output_iterpanda")
     return result_flag, report_pathstem, summary
 
 """

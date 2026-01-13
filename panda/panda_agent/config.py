@@ -52,4 +52,8 @@ CODING_START = "Coding thoughts:\n"
 PYTHON_START = "---------- START PYTHON ENVIRONMENT ----------\n"
 CODING_END   = "----------- END PYTHON ENVIRONMENT -----------\n\n"
 
-
+# ----------
+# SuperPanda3
+# ----------
+superpanda_graph = {}
+dwlite_dialog = []

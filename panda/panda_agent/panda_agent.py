@@ -86,8 +86,11 @@ from .report_writer import save_dialog
 from panda.researchworld.lit_search import *	# lit tasks - not yet included
 from panda.researchworld.lit_ideation import *
 
-from .superpanda import run_superpanda
-from .iterpanda import run_iterpanda
+# Optional extensions;
+# from .superpanda import run_superpanda
+# from .iterpanda import run_iterpanda
+# from .cursor_panda import run_cursor_panda
+from .superpanda_interactive import run_superpanda_interactive
 
 # ----------------------------------------
 
@@ -166,23 +169,29 @@ RETURNS:
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
 """
-def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir="output"):
+def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir=None, experiment_subdir=None):
 
-    # TEMP for debugging...
-#    import logging
-#    logger.setLevel(logging.CRITICAL)
+    if outputs_dir is None:
+        outputs_dir = os.path.join(agent_config.ROOT_DIR, "output")
 
     # Let's switch to a new directory for a new run:
-    now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    output_dir = os.path.join(agent_config.ROOT_DIR, outputs_dir, "experiment-"+now_str)
+    if experiment_subdir is None:
+        now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        experiment_subdir = "experiment-"+now_str
+        
+    output_dir = os.path.join(outputs_dir, experiment_subdir)
     os.makedirs(output_dir, exist_ok=True)
     os.chdir(output_dir)
     report_pathstem = os.path.abspath("experiment").replace("\\", "/")    # Use "/" for standardized (POSIX) path format
     my_globals.report_pathstem = report_pathstem			  # store this in a global for use by report_writer.py
 
+    # Redirect stderr to a log file...
     global interactive, nora_thread_id, nora_system_output
     print_to_user(agent_config.VERSION, " (running using ", model, ")", sep="")
     agent_config.PANDA_LLM = model
+
+#    workspacefolder = os.getenv("WORKSPACEFOLDER")
+#    print_to_user("Workspace folder:", workspacefolder)
 
     if reset_namespace or not hasattr(my_globals, 'state') or not my_globals.state:		# make sure my_globals.state has some initial value
         state = reset_the_namespace()

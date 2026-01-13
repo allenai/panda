@@ -62,6 +62,7 @@ GPT says:
    Python logging or your logger settings). You'll need to suppress or redirect those explicitly in your code or configuration."
 """
 import contextlib, io
+import os
 
 def _worker(job_id, task, folder=CURSOR_EXPT_FOLDER):
     try:
@@ -76,6 +77,28 @@ def start_research(task: str, folder:str=CURSOR_EXPT_FOLDER) -> dict:
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {"status": "running", "result": None, "error": None}
     threading.Thread(target=_worker, args=(job_id, task, folder), daemon=True).start()
+    return {"job_id": job_id, "status": "running"}
+
+# ======================================================================
+
+def _worker2(job_id, workspace_folder):
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            result = panda.run_cursor_panda(workspace_folder=workspace_folder)
+        _jobs[job_id] = {"status": "done", "result": result, "error": None}
+    except Exception as e:
+        _jobs[job_id] = {"status": "error", "result": None, "error": str(e)}
+
+# Cursor panda
+@mcp.tool()
+def start_auto_research() -> dict:
+    job_id = str(uuid.uuid4())
+    workspace_folder = os.getenv("WORKSPACE_FOLDER")
+    if workspace_folder is None:
+        logger.warning(f"Yikes! Environment variable WORKSPACE_FOLDER not defined, please define it! Assuming Panda root dir ({agent_config.ROOT_DIR}) for now....")
+        workspace_folder = panda.panda_agent.config.ROOT_DIR
+    _jobs[job_id] = {"status": "running", "result": None, "error": None}
+    threading.Thread(target=_worker2, args=(job_id,workspace_folder), daemon=True).start()
     return {"job_id": job_id, "status": "running"}
 
 # ======================================================================
@@ -151,6 +174,16 @@ def panda_log() -> Resource:
         content=[{"type": "text", "text": data}]
     )
 
+# DEBUG
+@mcp.tool()
+def test_stream():
+    for i in range(5):
+        print(f"STREAM {i}", file=sys.stderr, flush=True)
+        time.sleep(1)
+    return {"done": True}
+
 if __name__ == "__main__":
     mcp.run()
+
+
 
