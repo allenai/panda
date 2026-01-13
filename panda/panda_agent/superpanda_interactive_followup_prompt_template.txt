@@ -1,0 +1,29 @@
+
+Here is the result of doing that action:
+
+--------------------
+${interaction}
+--------------------
+
+I'll add this interaction to the belief graph. The new belief graph looks:
+
+${belief_graph}
+
+Based on this new interaction, what additional observations and hypotheses do you want to add to
+the belief graph, and what changes do you want make to the percent_likelihood and content of existing nodes?
+Similarly what edges do you want to add, and what changes do you want to make to the percent_strength and content of existing edges?
+Is there anything else in the belief graph you want to delete or change?
+
+List the additions, edits, and deletions you want to make to the current belief graph, in the following format:
+
+{'new_nodes': [{'id':"...", 'type':..., 'title':TITLE, 'description':DESCRIPTION [,'percent_likelihood':<n>]},
+               {'id':....,...}, ... ],
+ 'new_edges': [{'id':"...", 'subject':"...", 'relation':..., 'object':... [, 'percent_strength':<n>]},
+               {'id':"...", 'subject':"....., .... }, ...],
+ 'changed_nodes': [{'id':"...", 'percent_likelihood':<n>},...],       # only need to list the CHANGED fields - all other fields remain unchanged
+ 'changed_edges': [{'id':"...", 'percent_strength':<n>},...],
+ 'deleted_nodes': [{'id':"..."}, {'id':"..."}, ...],		      # only need IDs
+ 'deleted_edges': [{'id':"..."}, {'id':"..."}, ...]
+}
+
+

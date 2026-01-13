@@ -1,0 +1,73 @@
+You are a researcher, tasked with solving a quest described below. First I'll describe the scenario,
+then you can suggest an action take, then I'll tell you the result of that interaction, then you can
+suggest a new action to take, etc.
+
+Throughout, you'll use a BELIEF GRAPH to keep track of each interaction, the observations
+you make that are contained in those interactions, and the hypotheses you come up with
+that those observations support. After each action you suggest, I'll tell you the result of
+that interaction and ask you to update your belief graph accordingly.
+
+Here is the specification of the belief graph representation:
+
+======================================================================
+Specification of the belief graph representation:
+======================================================================
+
+There are three types of nodes:
+
+1. Hypotheses (named H*): conjectures about the world, e.g.,:
+     {'id':"H1", 'type':"hypothesis", 'title':"food contamination", 'description':"Food contamination by pathogenic microorganisms", 'percent_likelihood':30}
+     {'id':"H2", 'type':"hypothesis", 'title':"bad pizza", 'description':"There some problem with the colonists' pizza", 'percent_likelihood':10}
+   Note that, unlike other nodes, this one has an extra feature namely percent_likelihood (degree of confidence the hypothesis is true).
+     
+2. Interactions (named I*): actions you performed and the environment's response, e.g.,
+     {'id':"I1", 'type':"interaction", 'title': "interview", 'description':"You interview Adams. He says he exercised, ate cafeteria pizza, and now feels ill."}
+     
+3. Observations (named O*): A specific observation contained in the overall environment's response (I*) to an action, e.g.,
+     {'id':"O1", 'type':"observation", 'title':"ill after eating pizza", 'description':"Adams ate pizza, and now feels ill"}
+
+There are four types of edges:
+
+1. Interactions include observations, e.g., using the above nodes:
+   {'id':"E1", 'subject':"I1", 'relation':"includes", 'object':"O1"}           # I1 (the interview) includes the observation O1 (Adams became ill after pizza)
+
+2. Observations supports Hypotheses, e.g.,
+   {'id':"E2", 'subject':"O1", 'relation':"supports", 'object':"H2", 'percent_strength':70}	# O1 (Adams became ill after pizza) supports H2 (bad pizza)
+   Note that this relation has an extra feature namely percent_strength (degree of support).
+
+3. Observations contradicts Hypotheses, e.g.,
+   {'id':"E3", 'subject':"O1", 'relation':"contradicts", 'object':"H3", 'percent_strength':20}	# O1 (Adams became ill after pizza) contradicts H3 (radiation sickness)
+   Note that this relation has an extra feature namely percent_strength (degree of weakening).
+
+4. One hypothesis is a specialization (special case, sub-hypothesis) of another, e.g.,
+   {'id':"E4", 'subject':"H2", 'relation':"is specialization of", 'object':"H1"}			# H2 (bad pizza) is specialization of H1 (food contamination)
+
+======================================================================
+
+The initial belief graph is empty, and looks like this:
+
+{'nodes':[], 'edges':[]}
+
+--------------------
+
+Let's get started!
+
+Here is the initial "interaction", namely the initial scenario including a description of your quest:
+
+--------------------
+${interaction}
+--------------------
+
+I'll add this "interaction" to the belief graph. The new belief graph looks:
+
+${belief_graph}
+
+Based on this new interaction, what observations and hypotheses do you want to add to the belief graph?
+Return you answer in the following JSON form:
+
+{'new_nodes': [{'id':"...", 'type':..., 'title':TITLE, 'description':DESCRIPTION [,'percent_likelihood':<n>]},
+               {'id':....,...}, ... ],
+ 'new_edges': [{'id':"...", 'subject':"...", 'relation':..., 'object':... [, 'percent_strength':<n>]},
+               {'id':"...", 'subject':"....., .... }, ...] }
+
+Go ahead!
