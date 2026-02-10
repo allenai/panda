@@ -1,0 +1,146 @@
+
+----------------------------------------------------------------------
+                       RESEARCH REPORT
+----------------------------------------------------------------------
+
+        Evaluation of Claude's Performance on 2-Digit Addition: A 5-Problem Assessment
+        ==============================================================================
+                          PANDA
+               Allen Institute for AI, Seattle, WA
+                        02-10-2026 14:34:23
+                    panda@allenai.org
+
+Abstract
+--------
+ABSTRACT
+
+This study evaluates the arithmetic capabilities of the Claude language model (claude-sonnet-4-5-20250929) on 2-digit addition problems. The goal was to assess Claude's accuracy in performing basic arithmetic operations. We generated a dataset of 5 two-digit addition problems with varying complexity, including problems with and without carrying, and problems resulting in both 2-digit and 3-digit sums. Claude was queried with each problem and asked to provide numerical answers, which were then compared against the correct answers. The model achieved 100% accuracy (5/5 correct) on this limited test set, correctly solving all problems and providing appropriately formatted numerical responses. However, these findings are based on a very small sample size of only 5 problems, which limits the statistical significance and generalizability of the results. The problems tested represent only a narrow range of possible 2-digit addition scenarios. Therefore, while Claude demonstrated perfect performance on this specific set of examples, these results should not be interpreted as definitive evidence of the model's overall arithmetic capabilities. Further testing with larger and more diverse problem sets would be necessary to draw broader conclusions about Claude's mathematical performance and reliability for arithmetic tasks in practical applications.
+
+
+1. Introduction
+---------------
+INTRODUCTION
+
+Large language models are increasingly being used in applications that may require basic arithmetic capabilities, from educational tools to computational assistants. Understanding the reliability of these models on fundamental mathematical operations is important for determining appropriate use cases and identifying potential limitations. Two-digit addition represents one of the most basic arithmetic skills, typically mastered by elementary school students, and serves as a baseline test for numerical reasoning capabilities.
+
+This study investigates the performance of Claude (claude-sonnet-4-5-20250929) on 2-digit addition problems. We created a test dataset of 5 addition problems involving two-digit operands, ranging from simple cases without carrying (e.g., 13 + 45) to more complex problems requiring carrying across digit positions (e.g., 41 + 38) and problems resulting in three-digit sums (e.g., 96 + 79). Each problem was presented to Claude with a prompt requesting only the numerical answer. The model's responses were then parsed and compared against the mathematically correct answers to calculate accuracy.
+
+Claude achieved 100% accuracy on this test set, correctly answering all 5 problems and providing responses in the expected numerical format. However, it is critical to emphasize that this result is based on an extremely limited sample of only 5 problems. This sample size is insufficient to support strong claims about the model's general arithmetic abilities or reliability. The problems tested represent only a small fraction of possible 2-digit addition scenarios and may not capture edge cases or more challenging combinations. These results should be interpreted as preliminary observations rather than conclusive evidence of Claude's mathematical capabilities.
+
+2. Approach
+------------
+APPROACH
+
+Dataset Generation
+
+We generated a test dataset of 5 two-digit addition problems using Python's random number generator with a fixed seed (seed=42) for reproducibility. Each problem consisted of two randomly selected integers in the range [10, 99], representing standard two-digit numbers. For each problem, we calculated and stored the mathematically correct answer. The dataset included problems with varying characteristics:
+- Problems without carrying between digit positions
+- Problems requiring carrying from the ones to tens place
+- Problems requiring carrying to the hundreds place (resulting in three-digit sums)
+
+The five problems generated were:
+1. 91 + 24 = 115
+2. 13 + 45 = 58
+3. 41 + 38 = 79
+4. 27 + 23 = 50
+5. 96 + 79 = 175
+
+Querying Claude
+
+For each problem in the dataset, we constructed a prompt of the form: "What is [num1] + [num2]? Please provide only the numerical answer." This prompt was designed to elicit a concise numerical response without additional explanation. We used the Claude model (claude-sonnet-4-5-20250929) via the call_llm function with temperature set to 0 to ensure deterministic responses. Each query was executed independently, and the model's full text response was recorded.
+
+Response Evaluation
+
+To evaluate Claude's answers, we extracted numerical values from the model's text responses using regular expression pattern matching to identify integers in the response string. The first numerical value found in each response was treated as Claude's answer. We then performed exact integer comparison between Claude's extracted answer and the correct answer for each problem. A response was marked as correct only if the extracted numerical value matched the correct answer exactly. We calculated overall accuracy as the percentage of problems answered correctly.
+
+Limitations
+
+This evaluation approach has several important limitations. The sample size of 5 problems is very small and provides minimal statistical power. The problems were randomly generated and may not represent the full range of difficulty or complexity possible with 2-digit addition. The prompt design may influence model performance, and alternative phrasings were not tested. The evaluation relied on simple pattern matching to extract answers, which assumes the model provides numerical responses in an expected format.
+
+3. Results
+----------
+RESULTS
+
+Overall Performance
+
+Claude's performance on the 2-digit addition task is summarized in Table 1. The model correctly solved all 5 problems in the test set, achieving 100% accuracy with no incorrect answers.
+
+Table 1: Overall Performance Summary
+Claude's performance on 2-digit addition problems
+
+Metric                          Value
+--------------------------------------------------
+Total Problems Tested           5
+Correct Answers                 5
+Incorrect Answers               0
+Accuracy Rate                   100.0%
+
+
+Detailed Problem-by-Problem Results
+
+Table 2 presents the detailed results for each individual addition problem, showing the problem statement, the correct answer, Claude's answer, and whether the response was correct.
+
+Table 2: Problem-by-Problem Results
+Detailed results for each addition problem
+
+Problem ID    Problem        Correct Answer    Claude's Answer    Status
+---------------------------------------------------------------------------
+1             91 + 24        115               115                PASS
+2             13 + 45        58                58                 PASS
+3             41 + 38        79                79                 PASS
+4             27 + 23        50                50                 PASS
+5             96 + 79        175               175                PASS
+
+
+Response Format
+
+All of Claude's responses were correctly formatted as simple numerical answers. The model provided clean integer values without extraneous text, making answer extraction straightforward and unambiguous in all cases.
+
+4. Analysis
+----------
+ANALYSIS
+
+Performance Across Problem Types
+
+Claude demonstrated correct performance across all problem types in the limited test set. We examine several representative examples to illustrate the model's behavior on different categories of 2-digit addition problems.
+
+For simple problems where the sum does not exceed 99 and minimal carrying is required, Claude performed accurately. For example, on the problem "27 + 23", the correct answer is 50. Claude responded with "50", demonstrating correct arithmetic without carrying between tens and ones places.
+
+For problems requiring no carrying between digit positions, the model also succeeded. On the problem "13 + 45", where the ones place (3 + 5 = 8) and tens place (1 + 4 = 5) can be computed independently, the correct answer is 58. Claude responded with "58", showing appropriate handling of this straightforward case.
+
+Problems requiring carrying from the ones to tens place were also solved correctly. For the problem "41 + 38", the ones place sum (1 + 8 = 9) does not require carrying, but the tens place (4 + 3 = 7) must be computed correctly to yield 79. Claude responded with "79", indicating proper execution of the calculation.
+
+More complex problems where the sum exceeds 100 and requires carrying to the hundreds place were handled correctly. For "96 + 79", which requires computing 6 + 9 = 15 in the ones place (carrying 1), then 9 + 7 + 1 = 17 in the tens place (carrying 1 to hundreds), yielding the three-digit result 175. Claude responded with "175", demonstrating correct handling of this more challenging calculation.
+
+Another problem resulting in a three-digit answer, "91 + 24", requires computing 1 + 4 = 5 in the ones place, then 9 + 2 = 11 in the tens place (carrying 1 to hundreds), yielding 115. Claude responded with "115", again showing correct arithmetic with carrying to produce a three-digit sum.
+
+Response Consistency
+
+Across all five problems, Claude consistently provided concise numerical answers matching the requested format. There were no instances of the model providing explanations, showing work, or including extraneous text. This consistency in response format simplified the evaluation process and suggests the model understood the instruction to provide only numerical answers.
+
+Limitations of the Analysis
+
+The perfect accuracy observed must be interpreted with extreme caution given the very small sample size. With only 5 problems tested, we cannot reliably assess the model's error rate, identify systematic failure modes, or characterize performance on edge cases. The problems tested do not comprehensively cover all possible 2-digit addition scenarios. For instance, we did not systematically test problems with specific properties such as adding numbers ending in 9, problems with maximum possible sums (99 + 99 = 198), or problems with minimum sums (10 + 10 = 20). The random selection process may have inadvertently excluded challenging cases. Furthermore, testing with temperature set to 0 ensures deterministic responses but does not reveal whether the model might produce inconsistent answers under different sampling conditions. These limitations significantly constrain the conclusions that can be drawn from this evaluation.
+
+5. Conclusion
+-------------
+CONCLUSION
+
+This study evaluated Claude's (claude-sonnet-4-5-20250929) performance on 2-digit addition using a test set of 5 problems. The model achieved 100% accuracy, correctly solving all problems and providing appropriately formatted numerical responses. Claude successfully handled problems of varying complexity, including those without carrying, those requiring carrying between digit positions, and those producing three-digit sums.
+
+However, these findings are severely limited by the extremely small sample size of only 5 problems. This sample is statistically insufficient to draw reliable conclusions about Claude's general arithmetic capabilities or to estimate its true error rate on 2-digit addition. A model could easily achieve 100% accuracy on 5 problems by chance or due to the particular problems selected, without possessing robust arithmetic skills. The test set does not comprehensively cover the full range of 2-digit addition scenarios and may not include edge cases or particularly challenging combinations.
+
+The primary finding of this research is not that Claude is definitively capable of reliable 2-digit addition, but rather that the model correctly solved these specific 5 problems under these specific testing conditions. We cannot extrapolate from this limited evidence to make strong claims about performance on other problems, performance consistency over repeated trials, or reliability in practical applications.
+
+For any application where arithmetic accuracy is important, particularly those involving safety, financial calculations, or other high-stakes contexts, these results are wholly insufficient to establish Claude's reliability. Extensive additional testing with much larger problem sets, systematic coverage of problem types, and repeated trials would be necessary before drawing conclusions about the model's arithmetic capabilities. Users should not rely on these findings as evidence of dependable mathematical performance without substantially more rigorous evaluation.
+
+
+
+Notes
+-----
+claude-sonnet-4-5-20250929: 241679 tokens
+Runtime: 3 minutes.
+
+
+
+
