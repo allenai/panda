@@ -1,6 +1,6 @@
 
 from .file_utils import read_file_contents, file_exists, delete_file, download_file, copy_file
-from .file_utils import convert_pdf_to_text, clear_directory, add_to_end_of_file
+from .file_utils import clear_directory, add_to_end_of_file
 
 from .utils import clean_extract_json, remove_html_markup, multiline_input
 from .utils import extract_html_from_string, extract_json_from_string

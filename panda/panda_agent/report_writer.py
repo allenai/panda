@@ -14,8 +14,8 @@ from panda.utils import replace_special_chars_with_ascii, call_llm, call_llm_jso
 from . import config as agent_config
 # Below purely to get researchworld.tools.created_datasets and researchworld.tools.created_categories vars (rather than a COPY of those vars at import time, voa from ... import ..)
 #import panda.researchworld.tools as tools
-import panda.researchworld.tools as tools
-import panda.researchworld.ideate_categories as ideate_categories
+#import panda.researchworld.tools as tools
+#import panda.researchworld.ideate_categories as ideate_categories
 
 ### --------------------
 
@@ -151,8 +151,8 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
         logger.info("%s...", response[:70])
         report_parameters[section] = response
 
-    dataset_named_dataframes, categories_named_dataframes = get_dataframes_for_appendix(report_dialog)
-    nice_dataframes_txt, nice_dataframes_html = format_nice_dataframes(dataset_named_dataframes, categories_named_dataframes)
+#    dataset_named_dataframes, categories_named_dataframes = get_dataframes_for_appendix(report_dialog)
+#    nice_dataframes_txt, nice_dataframes_html = format_nice_dataframes(dataset_named_dataframes, categories_named_dataframes)
     all_dataframes = get_dataframes(my_globals.code_so_far)
     all_dataframes_txt = ""
     all_dataframes_html = ""    
@@ -166,8 +166,8 @@ def write_report(filename="report", report_dir=REPORT_DIR, timestamp=True, input
     report_parameters['notes'] = footnotes()
     report_parameters['date'] = datetime.datetime.now().strftime("%m-%d-%Y %H:%M:%S")
     report_parameters['underline'] = "=" * len(report_parameters['title'])		# for .txt output
-    report_parameters['html_dataframes'] = nice_dataframes_html
-    report_parameters['txt_dataframes'] = nice_dataframes_txt
+#    report_parameters['html_dataframes'] = nice_dataframes_html
+#    report_parameters['txt_dataframes'] = nice_dataframes_txt
     report_parameters['html_all_dataframes'] = all_dataframes_html
     report_parameters['txt_all_dataframes'] = all_dataframes_txt    
 
@@ -283,6 +283,8 @@ def get_token_summary(token_counts):
 
 ## MUCH simpler - just use global variables to track created datasets and categories!
 ## RETURNS: two values, each a list of (pair) tuples ("dataset|categories",DataFrame)    (DataFrame is the actual dataframe, not a variable name)
+"""
+#### SPECIAL DATAFRAMES NO LONGER USED
 def get_dataframes_for_appendix(report_dialog=None):
     dataset_named_dataframes = []
     for created_dataset in tools.created_datasets:
@@ -333,7 +335,8 @@ def format_nice_dataframes(dataset_named_dataframes, categories_named_dataframes
     nice_dataframes_txt = txt_dataset_str + txt_categories_str
     nice_dataframes_html = html_dataset_str + html_categories_str
     return nice_dataframes_txt, nice_dataframes_html
-    
+"""
+
 ### ======================================================================
 ###		print out the dialog so far (both SHORT and LONG versions)
 ### ======================================================================

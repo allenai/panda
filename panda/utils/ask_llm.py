@@ -78,8 +78,9 @@ def call_llm(prompt, response_format={"type":"text"}, model=agent_config.PANDA_L
     elif model in ["gpt4",config.DEFAULT_GPT4_MODEL]:
         answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=config.DEFAULT_GPT4_MODEL, quiet=quiet)
     elif model in ["gpt4.5",config.DEFAULT_GPT45_MODEL]:
-        answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=config.DEFAULT_GPT45_MODEL, quiet=quiet)    
-    elif model in ["o1-mini","o3-mini","o4-mini","gpt-4.1","gpt-4.1-nano","gpt-5","gpt-5-mini"]:
+        answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=config.DEFAULT_GPT45_MODEL, quiet=quiet)
+#   elif model in ["o1-mini","o3-mini","o4-mini","gpt-4.1","gpt-4.1-nano","gpt-5","gpt-5-mini"]:        
+    elif model.startswith(("o1", "o3", "o4", "gpt")):
         answer =  call_gpt(prompt, response_format=response_format, temperature=temperature, model=model, quiet=quiet)
     elif model == "llama":
         answer =  call_litellm(prompt, config.LLAMA_MODEL, quiet=quiet)
@@ -88,10 +89,13 @@ def call_llm(prompt, response_format={"type":"text"}, model=agent_config.PANDA_L
     elif model == "claude":
         answer =  call_litellm(prompt, config.DEFAULT_CLAUDE_MODEL, quiet=quiet)
     elif model == "claude-3.5":
-        answer =  call_litellm(prompt, config.CLAUDE35_MODEL, quiet=quiet)        
-    else:
-        logger.error(f"Unrecognized model: {model}")
-        answer =  f"Unrecognized model: {model}"
+        answer =  call_litellm(prompt, config.CLAUDE35_MODEL, quiet=quiet)
+    else:        
+        answer =  call_litellm(prompt, model, quiet=quiet)        		# NEW: Allow any LiteLLM to be explicitly specified
+        
+#    else:
+#        logger.error(f"Unrecognized model: {model}")
+#        answer =  f"Unrecognized model: {model}"
 
 # This is a bit of a sledgehammer that can remove some important characters. ChatGPT suggests unidecode instead which tries an ascii approximation.
 # https://chatgpt.com/share/68b086e0-ad2c-8001-bb07-6d5d60cc4c16

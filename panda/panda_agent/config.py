@@ -1,9 +1,7 @@
 
 import os
 
-#PANDA_LLM = 'gpt-4.1'
-PANDA_LLM = 'claude'
-#PANDA_LLM = 'gpt-5-mini'
+PANDA_LLM = "claude-sonnet-4-5-20250929"
 REPORT_WRITER_LLM = PANDA_LLM
 REPORT_TRANSLATOR_LLM = PANDA_LLM	# convert HTML to text (not used now I think)
 
@@ -11,20 +9,24 @@ SUPERPANDA_LLM = PANDA_LLM
 SUPERPANDA_REPORT_WRITER_LLM = PANDA_LLM
 
 ITERPANDA_LLM = PANDA_LLM	# relies on class...
+STEPPANDA_LLM = PANDA_LLM	# relies on class...
 
-# Get the directory where my_globals.py is located
+# Get the directory where my_globals.py is located (i.e., panda_agent)
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))		# panda/panda/panda_agent
-ROOT_DIR = os.path.dirname(os.path.dirname(MODULE_DIR))		# panda/
+ROOT_DIR = os.path.dirname(os.path.dirname(MODULE_DIR))		# panda/panda/
 
 # ==================================================
 # Globals for main Panda
 # ==================================================
 
 # Read in the system prompt template
-SYSTEM_PROMPT_TEMPLATE_FILE = os.path.join(MODULE_DIR, "panda_agent_prompt_template.txt")
-SYSTEM_PROMPT_TEMPLATE_FILE_ALLOW_SHORTCUTS = os.path.join(MODULE_DIR, "panda_agent_prompt_template_allow_shortcuts.txt")
+# NEW: No longer use library!
+#SYSTEM_PROMPT_TEMPLATE_FILE = os.path.join(MODULE_DIR, "panda_agent_prompt_template.txt")
+#SYSTEM_PROMPT_TEMPLATE_FILE = os.path.join(MODULE_DIR, "panda_agent_prompt_template_short.txt")
+#SYSTEM_PROMPT_TEMPLATE_FILE_ALLOW_SHORTCUTS = os.path.join(MODULE_DIR, "panda_agent_prompt_template_allow_shortcuts.txt")
 
 # Panda builds the prompt dynamically and caches it here for the user's benefit
+# new: Now static, not dynamic
 SYSTEM_PROMPT_FILE = os.path.join(MODULE_DIR, "panda_agent_prompt.txt")
 
 ADVICE_FILE = os.path.join(MODULE_DIR, "advice.txt")
@@ -43,7 +45,8 @@ MAX_EARLIER_STEP_RETRIES = 2
 MAX_ITERATIONS = 200     # prevent runaway system!
 #EXEC_TIMEOUT = 3600	 # 60 min max for executing a function, otherwise give up. This better be long enough!
 #EXPERIMENT_TIMEOUT = 7200	 # 2 hr max for an experiment
-EXPERIMENT_TIMEOUT = 10800	 # 3 hr max for an experiment
+#EXPERIMENT_TIMEOUT = 10800	 # 3 hr max for an experiment
+EXPERIMENT_TIMEOUT = 40000	 # lots!!
 
 PANDA_HEADER = "============================== Panda =============================="
 SYSTEM_PROMPT_HEADER   = "============================ SYSTEM PROMPT ==========================="
@@ -52,8 +55,3 @@ CODING_START = "Coding thoughts:\n"
 PYTHON_START = "---------- START PYTHON ENVIRONMENT ----------\n"
 CODING_END   = "----------- END PYTHON ENVIRONMENT -----------\n\n"
 
-# ----------
-# SuperPanda3
-# ----------
-superpanda_graph = {}
-dwlite_dialog = []

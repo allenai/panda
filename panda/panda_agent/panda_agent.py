@@ -67,30 +67,31 @@ from . import config as agent_config
 from .panda_agent_subprompts import *
 
 ### These are the TOOLS available to Panda for research (for now). 
-from panda.utils import call_llm, llm_list, get_token_counts, code_asks_for_user_input, logger, remove_trailing_newline
-from panda.researchworld import create_dataset, answer_questions, score_answers, spearman_strength, pearson_strength, ideate_categories, examples_in_category
-from panda.researchworld import get_function_documentation, get_workflow_documentation, get_plan_documentation
+from panda.utils import call_llm, llm_list, get_token_counts, code_asks_for_user_input, logger, remove_trailing_newline, file_exists
+# researchworld not really helpful any more
+#from panda.researchworld import create_dataset, answer_questions, score_answers, spearman_strength, pearson_strength, ideate_categories, examples_in_category
+#from panda.researchworld import get_function_documentation, get_workflow_documentation, get_plan_documentation
 from .report_writer import write_report, REPORT_DIR
 
 # temporary 
 # from panda.researchworld.prisoners_dilemma import PrisonersDilemma
 
 # Below purely to get researchworld.tools.created_datasets and researchworld.tools.created_categories vars (rather than a COPY of those vars at import time, voa from ... import ..)
-import panda.researchworld.tools as tools
-import panda.researchworld.ideate_categories as ideate_categories
+#import panda.researchworld.tools as tools
+#import panda.researchworld.ideate_categories as ideate_categories
 
 ### Additional functions used by the Panda agent implementation itself (but not required to do research)
 from panda.utils import call_llm, call_llm_json, parse_code, multiline_input, similar_strings, reset_token_counts
 from .report_writer import save_dialog
 
-from panda.researchworld.lit_search import *	# lit tasks - not yet included
-from panda.researchworld.lit_ideation import *
+#from panda.researchworld.lit_search import *	# lit tasks - not yet included
+#from panda.researchworld.lit_ideation import *
 
 # Optional extensions;
 # from .superpanda import run_superpanda
 # from .iterpanda import run_iterpanda
 # from .cursor_panda import run_cursor_panda
-# from .superpanda_interactive import run_superpanda_interactive
+#from .superpanda_interactive import run_superpanda_interactive
 
 # ----------------------------------------
 
@@ -232,7 +233,6 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
         else:
             planinfo = {'plan':None, 'step_number':None, 'step':None}	       		# If task=None (here), then this starts Panda in interactive mode, and it asks for a task
             result_flag = timebounded_panda_step("start", planinfo, state, [], model)			# MAIN ENTRY POINT. result_flag = "done" or "abort_<failure mode>"
-
         if not file_exists(report_pathstem + ".txt") and force_report: #  and result_flag == "done":
             try:
                 message = "No report generated! Trying to generate one now...\n"
@@ -335,8 +335,8 @@ def reset_panda_session():
     my_globals.print_so_far = ""            # What the user sees, used for the NORA UI and also save_dialog() for saving the short version
     my_globals.code_so_far = ""
     my_globals.plotfiles_so_far = []	    # Note we *don't* reset plot_counter to avoid collisions between different experiments (for now...later should move them)
-    tools.created_datasets = []
-    ideate_categories.created_categories = []
+#    tools.created_datasets = []
+#    ideate_categories.created_categories = []
     my_globals.py_counter = 1    
     my_globals.start_time = time.time()    
     reset_token_counts()
@@ -352,20 +352,25 @@ def reset_panda_session():
 # Build system prompt dynamically, to accomodate changing researchworld function documenntation and example workflows
 def build_system_prompt(allow_shortcuts=False):
     global SYSTEM_PROMPT, REFLECTION_SUBPROMPT, PLAN_REFLECTION_SUBPROMPT
+
     logger.debug("DEBUG: Building system prompt...")
 
     if allow_shortcuts:
-        system_prompt_template_file = agent_config.SYSTEM_PROMPT_TEMPLATE_FILE_ALLOW_SHORTCUTS
         REFLECTION_SUBPROMPT = REFLECTION_SUBPROMPT_ALLOW_SHORTCUTS
-        PLAN_REFLECTION_SUBPROMPT = PLAN_REFLECTION_SUBPROMPT_ALLOW_SHORTCUTS        
-    else:
-        system_prompt_template_file = agent_config.SYSTEM_PROMPT_TEMPLATE_FILE
-    
-#   with open(agent_config.SYSTEM_PROMPT_TEMPLATE_FILE, 'r') as f:
+        PLAN_REFLECTION_SUBPROMPT = PLAN_REFLECTION_SUBPROMPT_ALLOW_SHORTCUTS
+
+    with open(agent_config.SYSTEM_PROMPT_FILE, 'r') as f:
+        SYSTEM_PROMPT = f.read()        
+    return SYSTEM_PROMPT        
+
+""" 
+### NO LONGER NEED RESEARCHWORLD FUNCTIONS    
     with open(system_prompt_template_file, 'r') as f:
         SYSTEM_PROMPT_TEMPLATE = f.read()
     system_prompt_template = Template(SYSTEM_PROMPT_TEMPLATE)
-    
+
+    system_prompt_template_file = agent_config.SYSTEM_PROMPT_TEMPLATE_FILE
+
     function_documentation = get_function_documentation()		# in researchworld
     report_writing_documentation = agent_config.doc['write_report']
     workflow_documentation = get_workflow_documentation()		# in researchworld
@@ -378,10 +383,10 @@ def build_system_prompt(allow_shortcuts=False):
                          'workflow_documentation':workflow_documentation,
                          'plan_documentation':plan_documentation}
     SYSTEM_PROMPT = system_prompt_template.substitute(prompt_parameters)
-    
+
     with open(agent_config.SYSTEM_PROMPT_FILE, "w") as file:		# save it to disk, purely for user's benefit
         file.write(SYSTEM_PROMPT)
-    return SYSTEM_PROMPT        
+"""
 
 # ----------
 

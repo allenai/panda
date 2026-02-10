@@ -51,8 +51,6 @@ from panda.utils import config as utils_config
 
 from panda.panda_agent import my_globals         # leave "my_globals." prefix on globals for now, for clarity
 from panda.panda_agent import panda_agent_subprompts
-import panda.researchworld.tools as tools
-import panda.researchworld.ideate_categories as ideate_categories
 
 # panda.evaluate.run_astabench_evaluation.run_astabench()
 def run_astabench():

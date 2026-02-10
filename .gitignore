@@ -10,10 +10,16 @@ __pycache__/
 output/*
 README.txt
 papers/
+researchworld/
+superpanda/
 # Ignore files still under development
 rulebase.txt
 interesting-trace*
 cm_train*
+SUPERPANDA_WEB_README.md
+run_superpanda_web.py
+README-sys-path-problem.txt
+UI_CHANGES.md
 
 
 

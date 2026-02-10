@@ -1,7 +1,6 @@
 
 import requests
 import os
-from pdfminer.high_level import extract_text
 import shutil	# for copy_file
 import re
 from typing import Optional, Tuple
@@ -75,35 +74,6 @@ def download_file(url=None, filepath=None):
     except Exception as e:
         logger.error(f"Error downloading file from {url}: {e}")
         return None
-
-### ======================================================================
-###		CONVERT PDF TO TEXT
-### ======================================================================
-
-# o1's version
-# convert_pdf_to_text("more_human_than_human.pdf", "../bias-experiments")
-def convert_pdf_to_text(filestem, directory):
-    # Construct the full paths to the PDF and the output text file
-    pdf_path = os.path.join(directory, f"{filestem}.pdf")
-    txt_path = os.path.join(directory, f"{filestem}.txt")
-    
-    # Check if the PDF file exists
-    if not os.path.exists(pdf_path):
-        logger.error(f"PDF file '{pdf_path}' does not exist.")
-        return
-    
-    try:
-        # Extract text from the PDF file
-        text = extract_text(pdf_path)
-        clean_text = replace_special_chars_with_ascii(text)
-        
-        # Write the text to the output text file
-        with open(txt_path, 'w', encoding='utf-8') as txt_file:
-            txt_file.write(clean_text)
-        
-        logger.info(f"Successfully converted '{pdf_path}' to '{txt_path}'.")
-    except Exception as e:
-        logger.error(f"An error occurred while converting the PDF: {e}")
 
 # ======================================================================
 #		WIPE A DIRECTORY (Courtesy Gemini)

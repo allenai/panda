@@ -35,8 +35,6 @@ ${analysis}
 -------------
 ${conclusion}
 
-${txt_dataframes}
-
 ${txt_all_dataframes}
 
 Notes

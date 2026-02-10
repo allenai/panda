@@ -1,4 +1,4 @@
-# Panda v1.4.10
+# Panda v1.5.0
 
 # Overview
 
@@ -10,8 +10,9 @@ For an example output report and trace, see the /output directory. The .html fil
 
 ## Instructions
 
-1. Make sure you have your OpenAI key set in the environment variable OPENAI\_API\_KEY. Optional: If you also want to use Mistral/LLama, also set TOGETHER\_API\_KEY. If you want to use Claude, also set ANTHROPIC\_API\_KEY.
-2. Create a new conda environment for panda:
+1. Panda makes calls to an underlying LLM, the default is set in PANDA_LLM in panda_agent/config.py. (You can also specify a different one at runtime). 
+2. Make sure you have the appropriate API keys set for the LLM(s) you need (e.g., for PANDA_LLM defined in panda_agent/config.py, currently Claude).  If you want to use OpenAI (GPT), set in the environment variable OPENAI\_API\_KEY. If you want to use Mistral/LLama, set TOGETHER\_API\_KEY. If you want to use Claude, set ANTHROPIC\_API\_KEY.
+3. Create a new conda environment for panda:
 
 ```
 % git clone https://github.com/allenai/panda.git
@@ -64,18 +65,30 @@ Notes:
  * The report_filestem shows where the .html and .txt reports are, as well as the -trace.txt and -trace-long.txt log files.
  * The summary is a short GPT-generated summary for the user.
 
-The full list of arguments are given in panda/panda_agent/panda_agent.py:
+The full list of arguments are given in panda/panda_agent/panda_agent.py (defaults shown below):
 ```
-run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir="output")
+run_panda(task=None, background_knowledge=None, force_report=False, allow_shortcuts=False, model=agent_config.PANDA_LLM, outputs_dir="output")
 ```
+* **task** (txt): The task to perform, e.g., "How good is Llama at math?"
+* **background_knowledge** (txt): Any background knowledge to include in the context when planning
+* **force_report=True** (default False): Make Panda **always** produce a report (if the experiment succeeds), even if the research plan doesn't explicitly call for one.
+* **allow_shortcuts=True** (default False): Allow Panda to keep going if it takes a shortcut (allows partial credit during evaluations), otherwise it will give up (abort).
+* **model**: The underlying LLM to use. Default is set in PANDA_LLM in panda_agent/config.py.
+* **outputs_dir**: By default, the resulting experiment-<date>-<time>/ directory is created as a subdirectory of outputs_dir. outputs_dir is relative to the Panda dir itself.
 
 3.4 Via MCP, linked to Cursor
 Edit panda/mcp.json appropriately to point to the Python containing the Panda library files, then place in the ~/.cursor/ folder. Connection is .cursor/mcp.json -> python[that contains panda environment] panda.mcp_server (which imports panda) -> panda.run_panda()
 
 ## Examples
 
-Some example tasks you can try:
-
+Some example tasks you can try, e.g.,
+```
+(panda) % python run_panda.py "What is 1 + 1?" 
+```
+or in iPython:
+```
+In [4]: panda.run_panda(task="What is 1 + 1?", force_report=True)
+```
 * What is 1 + 1?
 * Does Llama know what 245 \* 2414 is?
 * Does Llama do worse when answering questions that end in a question mark ('?') than on questions that don't have a question mark?
@@ -87,43 +100,7 @@ Some example tasks you can try:
 
 # Description
 
-This codebase implements a version of Panda, a simple, autonomous "discovery" system which plans and performs probing-like experiments to characterize LLM capabilities.
-
-It consists of:
-
-* a set of basic *Python functions* from which various research workflows can be built (in the directories panda/researchworld and panda/utils)  
-* a large *system prompt* which describes how the basic Python functions can be used to build research workflows (in panda/panda\_agent/panda\_agent\_prompt.txt)  
-* a top-level *agent controller* to plan and execute workflows (in panda/panda\_agent/panda\_agent.py)
-
-## Python Functions
-
-There are ten Python tools (functions) from which workflows are built:
-
-* create\_dataset()		(in panda/researchworld/tools.py)  
-* answer\_questions() 		(in panda/researchworld/tools.py)  
-* score\_answers() 		(in panda/researchworld/tools.py)  
-* ideate\_categories()		(in panda/researchworld/ideate\_categories.py)
-* examples_in\_category()       (in panda/researchworld/ideate\_categories.py)
-* spearman\_strength()          (in panda/researchworld/tools.py)
-* pearson\_strength()           (in panda/researchworld/tools.py)
-* call\_llm()                   (in panda/utils/ask_llm.py)
-* llm\_list()                   (in panda/utils/mapping.py)  
-* write\_report()		(in panda/panda\_agent/report_writer.py - it's not clear if report-writing should be an agent skill or an environment tool)
-
-Documentation is created on demand (except for write_report, for now) and placed in panda/researchworld/documentation.txt. That file can then be (manually) included in the agent's prompt. To see illustrations of how workflows can be built from these, see researchworld/workflows.py.  (Note: workflows.py is not part of the system code).
-
-The first three functions above are simple calls to more generic functions (e.g., map a LLM query over a column in a DataFrame). ideate\_categories() is a much more complex function that conjectures categories (that identify high/low-scoring examples), sorts examples into those categories (using categorize\_items.py) and scores the categories (using score\_categories.py). Similarly write\_report.py is somewhat complex, asking GPT a series of questions for different report sections, and compiling a report from them.
-
-## System Prompt
-
-A large system prompt (panda/panda\_agent/panda\_agent\_prompt.txt) documents:
-
-* The provided Python functions, and how to implement various research steps using them  
-* Examples of plans that implement different top-level tasks, using those functions
-
-## Agent Controller
-
-The agent controller (panda/panda\_agent/panda\_agent.py) is perhaps the most interesting part of Panda. It is somewhat of a mash-up of a ReAct loop with a reflection step added in, plus a Magentic-One orchestrator-like control loop, plus a step counter which I've not seen used elsewhere.
+This codebase implements a version of Panda, a simple, autonomous "discovery" system which plans and performs software experiments. The agent controller (panda/panda\_agent/panda\_agent.py) uses an explicit plan-and-act loop, with a reflect step added in and a step counter to keep it on track.
 
 The controller behaves as follows: Given a top-level task, there are three basic actions:
 
@@ -143,7 +120,7 @@ Then given a plan, iterate an act-reflect "inner loop"
    * **next_step**: if the current step is complete. This moves us to work on the next step in the plan.
    * **continue**: if the current step made progress, but something was missed or the code did not do the right thing. This moves us to take additional actions to complete the step.
    * **debug**: if a Python error message appeared. This will cause us to debug and retry the step.
-   * **abort_shortcuts**: if shortcuts were taken. This causes the plan to be abandoned. It's important to abandon a plan if a shortcut was taken.
+   * **abort_shortcuts**: if shortcuts were taken. This causes the plan to be abandoned (can switch this behavior off with run_panda(allow_shortcuts=True)).
    * **abort_impossible**: if the plan appears logically impossible to succeed.
    * **replan**: if the current plan doesn't seem to be going anywhere. This will trigger abandoning the current plan and replanning from the current state.
    * **retry_earlier_step**: if current evidence suggests a problem with an earlier step, jump back to that step and try again from there.
@@ -154,23 +131,21 @@ The step counter ensures that the plan is followed systematically without skippi
 
 # Repository Structure
 
-* output/  directory in which generated reports and the dialog traces will be placed:
+* output/  directory in which an experiment-<date>-<time> subdirectory is created for each experiment run. The subdirectory will contain:
+    * experiment.{txt,html} - The final report (txt/html format)
+    * experiment-{trace,trace-long}.txt - Trace of the system running (what that the user sees/verbatim dialog between Panda and the LLM)
+    * experiment.{py,-artifacts.py} - the Python code and Python artifacts (variable values) created during experimentation
+    * experiment-done.txt - One-word flag showing the outcome of the experiment ("done", "abort_<failure_mode>")
+    * Other files (e.g., .jpg, .png) - Experiment-specific files generated during experimentation (e.g., plots)
 * output_demo/   contains an example of generated reports (html and txt versions) and execution traces
 * evaluation\_output/     this directory will be created on demand to place the evaluation results in
 * panda/     the Python codebase
   * panda_agent/    implements the agent controller  
     * panda\_agent.py is the agent controller
-    * panda\_agent\_prompt.txt is the (long) system prompt  
+    * panda\_agent\_prompt.txt is the system prompt  
     * panda\_agent\_subprompts.py contains prompt addendums depending on which mode the agent is in (planning, acting (coding), reflecting)
     * paper\_writer.py, format\_categories.py, format\_dataset.py contain Python utilities for writing the final report, and also outputing the dialog trace files
-    * superpanda.py, iterpanda.py: experimental (not used)
-  * researchworld/    contains research-oriented Python utilities
-    * documentation.txt    contains the documentation of the researchworld tools (utilities), for inclusion in an agent system prompt
   * utils/ contains a few shared basic Python utilities used by both researchworld and panda\_agent
-    * .html: The final report (html format)
-    * .txt: The final report (.txt format)
-    * -trace.txt: Trace of the system running. This is what that the user sees on the console.
-    * -trace-long.txt: The verbatim dialog between Panda and GPT
   * evaluate/        contains utilities to run and score Panda on a dataset
     * run_evaluation.py             Run an evaluation (.csv dataset). Results placed in evaluation\_output/ by default
     * score_answer.py               Function to score answers returned by Panda run_evaluation() function    
@@ -189,6 +164,7 @@ The step counter ensures that the plan is followed systematically without skippi
  * v1.4.8: Rename package as Panda ("plan-and-act")
  * v1.4.9: Add MCP interface (panda/mcp_server.py) and command line execution (python run_panda.py "What is 1 + 1?")
  * v1.4.10: Add superpanda_interactive.py (exploratory), minor code updates
+ * v1.5: Remove researchworld and built-in research functions (not needed, can bias against good research decisions)
 
 # Questions, Issues, and Further Information
 

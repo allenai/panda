@@ -145,7 +145,6 @@ Return your answer as a JSON object of the form:
 #	REFLECT SUBPROMPT
 #======================================================================
 
-## **OLD** VERSION LATER
 REFLECTION_SUBPROMPT = """
 YOUR NEXT INSTRUCTION: Perform a REFLECTION step to assess if top-level task is complete, the current plan step is complete, if shortcuts were taken, etc.
 
