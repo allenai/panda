@@ -1,0 +1,347 @@
+============================ SYSTEM PROMPT ===========================
+
+
+You are an autonomous research scientist, and have been tasked with creating and carrying out a plan of research.
+
+I'll provide you a top-level Research Task (e.g., "Characterize how well the language model Llama can perform 2-digit addition.").
+
+First, decide on the appropriate strategy for performing the task, either plan (for more complex tasks) or simply do it (for simpler tasks).
+
+Then:
+ - For a 'do' strategy, you'll generate the Python code and execute it. This strategy essentially treats the task as a 1-step plan (so no planning step needed).
+ - For a 'plan' strategy, you'll:
+     1. Generate a plan
+     2. Execute the plan, by iteratively working through each step. At each step, you generate Python code to perform the step, then I will execute the code for you and show you the results, then you'll reflect on what do to next.
+
+Here are details on each of those phases:
+
+======================================================================
+	PHASE 1. PICK A STRATEGY
+======================================================================
+
+You'll be asked to reflect on the immediate task, and decide on the appropriate strategy to follow, one of:
+ - do: a task you understand and can do directly in Python, with one or a few commands
+ - plan: a larger but well-defined task, that you can generate a plan for (then subsequently follow)
+
+Answer with a JSON structure of the form: {"strategy":STRATEGY, "explanation": EXPLANATION}, where 
+ - STRATEGY is either "do" or "plan"
+ - EXPLANATION is a natural-language explanation
+
+Some examples:
+
+Task: What is 1 + 1?
+{"strategy":"do", "explanation":"A single line of Python will answer this request, so no planning needed."}
+
+Task: How good is Llama at science?
+{"strategy":"plan", "explanation":"This involves multiple steps, so planning is needed."}
+
+======================================================================
+	PHASE 2. GENERATING A PLAN (for the 'plan' strategy)
+======================================================================
+
+ - Each plan step should be expressed in natural language.
+ - Each plan step should be implementable in Python (done at a later sage).
+
+When generating a plan, return the plan as a JSON object with the following structure:
+     {"plan": [{"step_number":1, "step":DESCRIPTION}, {"step_number":2, "step":DESCRIPTION}, ....]}
+
+======================================================================
+	PHASE 3. EXECUTING A PLAN (for the 'plan' strategy)
+======================================================================
+
+1. Overview
+
+Given a plan, we will then interact to repeatedly execute an ACTION then REFLECTION cycle to perform each step in the plan in turn.
+
+In the ACTION step, you'll generate some Python code to perform the next step in the plan. I'll then execute the Python code and show you the results.
+
+In the REFLECTION step, you'll reflect on whether the code execution was successful, and what to do next. Your possible next steps can include redoing the entire plan itself, or stopping if the research task is complete.
+
+2. The Action step
+
+I will give you the next step to perform, and you'll return an implementation of that step in Python, along with a "thought" describing your reasoning. In this step, you should return a JSTON object of the form:
+
+      {"thought":THOUGHT, "action":PYTHON_CODE}
+
+I'll then execute the code and add the results at the end of the conversation, then ask you to reflect on the results.
+Several examples are given below.
+
+Useful Python Functions:
+
+Here are two built-in Python functions that might be useful for you:
+
+(a) Basic Calls to a LLM
+
+def call_llm(prompt:str, model:str, temperature:int=0):
+Purpose:
+    Basic access to an LLM.
+Args:
+    prompt (str): The question/instruction to give to the LLM.
+    model (str): The full model name of a GPT or LiteLLM model, e.g., 'gpt-5', 'gpt-4.1-nano', 'claude-sonnet-4-5-20250929', 'together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+    temperature (int): The temperature to use during LLM generation (default 0)
+Returns:
+    response (str): The LLM response.
+Example:
+    call_llm("Generate a new research idea about large language models.")
+->  Title: Investigating the Impact of Multimodal Inputs on Large Language ....
+
+(b) Writing a Report
+
+def write_report():
+Purpose:
+    Writes a report to a file, and also prints it out as a text file in stdout.
+    The report summarizes the research performed in the current dialog history.
+    IMPORTANT: Make sure that all the information (examples etc.) required for the report is visible in the conversational history, as write_report() turns that history into a report.
+    If it is not, first print out the required information (examples, tables, etc.)
+Args:
+    None
+Returns:
+    The path stem to the reports. Add the suffixes ".txt" or ".html" to the stem for the path to the plain text / HTML report file, respectively.
+	
+Example:
+    write_report()
+->  Reports written to:
+    - c:/Users/peter/Desktop/panda/output/experiment-20250705-213812/experiment.html
+    - c:/Users/peter/Desktop/panda/output/experiment-20250705-213812/experiment.txt
+    # and returns the stem "c:/Users/peter/Desktop/panda/output/experiment-20250705-213812/experiment"
+
+3. The Reflection Step
+
+In the reflection step, you'll reflect on progress so far, to help decide what to do next. You will assess, among other things, whether the task is complete, whether the current step is complete, and whether a software (Python) error occured when executing code.
+
+
+======================================================================
+======================================================================
+
+NOW: Here is your top-level research task:
+compare 3 LLMs on what they think 2 + 2 is.
+
+======================================================================
+======================================================================
+
+
+============================== Panda ==============================
+
+Top-Level Task: compare 3 LLMs on what they think 2 + 2 is.
+
+----------------------------------------
+#1. Strategize how to proceed
+----------------------------------------
+
+YOUR NEXT INSTRUCTION: Reflect on the immediate task, and decide on the appropriate strategy to follow, one of:
+ - do: a task you understand and can do directly in Python, with one or a few commands
+ - plan: a larger but well-defined task, that you can generate a plan for (then subsequently follow)
+
+Answer with a JSON structure of the form: {"strategy":STRATEGY, "explanation": EXPLANATION}, where 
+ - STRATEGY is either "do" or "plan"
+ - EXPLANATION is a natural-language explanation
+
+================================ claude-sonnet-4-5-20250929 =================================
+{"strategy":"do", "explanation":"This is a straightforward task that can be accomplished with a few lines of Python code. I need to call 3 different LLMs with the same prompt asking what 2 + 2 is, collect their responses, and compare them. This doesn't require multiple complex steps or planning - it can be done directly."}
+============================== Panda ==============================
+
+Strategy: do
+Explanation: This is a straightforward task that can be accomplished with a few lines of Python code. I need to call 3 different LLMs with the same prompt asking what 2 + 2 is, collect their responses, and compare them. This doesn't require multiple complex steps or planning - it can be done directly.
+
+----------------------------------------
+
+Top-Level Task: compare 3 LLMs on what they think 2 + 2 is.
+
+----------------------------------------
+#2. Perform Step 1: compare 3 LLMs on what they think 2 + 2 is.
+----------------------------------------
+
+YOUR NEXT INSTRUCTION: Generate Python code that implements this step. I'll then execute it and show you the results. 
+Avoid code, e.g., input(), that requires a response from the user.
+Return your answer as a JSON object of the form:
+      {"thought":THOUGHT, "action":PYTHON_CODE}
+
+================================ claude-sonnet-4-5-20250929 =================================
+{"thought":"I'll call 3 different LLMs (GPT-4, Claude, and Llama) with the same simple prompt asking what 2 + 2 is, then display their responses in a clear comparison format.","action":"# Compare 3 LLMs on what they think 2 + 2 is\n\n# Define the models to test\nmodels = [\n    'gpt-4o-mini',\n    'claude-sonnet-4-5-20250929',\n    'together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'\n]\n\n# Define the prompt\nprompt = \"What is 2 + 2?\"\n\n# Store results\nresults = {}\n\nprint(\"Comparing 3 LLMs on: 'What is 2 + 2?'\")\nprint(\"=\" * 60)\nprint()\n\n# Query each model\nfor model in models:\n    print(f\"Querying {model}...\")\n    response = call_llm(prompt, model, temperature=0)\n    results[model] = response\n    print(f\"Model: {model}\")\n    print(f\"Response: {response}\")\n    print(\"-\" * 60)\n    print()\n\n# Summary\nprint(\"\\n\" + \"=\" * 60)\nprint(\"SUMMARY\")\nprint(\"=\" * 60)\nfor model, response in results.items():\n    print(f\"\\n{model}:\")\n    print(f\"  {response}\")\n\n# Write the report\nwrite_report()"}
+============================== Panda ==============================
+Coding thoughts:
+Thought: I'll call 3 different LLMs (GPT-4, Claude, and Llama) with the same simple prompt asking what 2 + 2 is, then display their responses in a clear comparison format.
+Action (code):
+# Compare 3 LLMs on what they think 2 + 2 is
+
+# Define the models to test
+models = [
+    'gpt-4o-mini',
+    'claude-sonnet-4-5-20250929',
+    'together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+]
+
+# Define the prompt
+prompt = "What is 2 + 2?"
+
+# Store results
+results = {}
+
+print("Comparing 3 LLMs on: 'What is 2 + 2?'")
+print("=" * 60)
+print()
+
+# Query each model
+for model in models:
+    print(f"Querying {model}...")
+    response = call_llm(prompt, model, temperature=0)
+    results[model] = response
+    print(f"Model: {model}")
+    print(f"Response: {response}")
+    print("-" * 60)
+    print()
+
+# Summary
+print("\n" + "=" * 60)
+print("SUMMARY")
+print("=" * 60)
+for model, response in results.items():
+    print(f"\n{model}:")
+    print(f"  {response}")
+
+# Write the report
+write_report()
+
+----------------------------------------
+
+I'll now execute the actions (code) you suggested...
+
+---------- START PYTHON ENVIRONMENT ----------
+
+In [1]: models = [
+    'gpt-4o-mini',
+    'claude-sonnet-4-5-20250929',
+    'together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo'
+]
+
+In [2]: prompt = "What is 2 + 2?"
+
+In [3]: results = {}
+
+In [4]: print("Comparing 3 LLMs on: 'What is 2 + 2?'")
+Comparing 3 LLMs on: 'What is 2 + 2?'
+
+In [5]: print("=" * 60)
+============================================================
+
+In [6]: print()
+
+
+In [7]: for model in models:
+    print(f"Querying {model}...")
+    response = call_llm(prompt, model, temperature=0)
+    results[model] = response
+    print(f"Model: {model}")
+    print(f"Response: {response}")
+    print("-" * 60)
+    print()
+Querying gpt-4o-mini...
+Model: gpt-4o-mini
+Response: 2 + 2 = 4
+
+This is a basic arithmetic fact. When you combine 2 units with another 2 units, you get a total of 4 units.
+------------------------------------------------------------
+
+Querying claude-sonnet-4-5-20250929...
+Model: claude-sonnet-4-5-20250929
+Response: 2 + 2 = 4
+
+This is a basic arithmetic fact. When you combine 2 units with another 2 units, you get a total of 4 units.
+------------------------------------------------------------
+
+Querying together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo...
+Model: together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo
+Response: 2 + 2 = 4
+
+This is a basic arithmetic fact. When you add two units to two units, you get four units in total.
+------------------------------------------------------------
+
+
+In [8]: print("\n" + "=" * 60)
+
+============================================================
+
+In [9]: print("SUMMARY")
+SUMMARY
+
+In [10]: print("=" * 60)
+============================================================
+
+In [11]: for model, response in results.items():
+    print(f"\n{model}:")
+    print(f"  {response}")
+
+gpt-4o-mini:
+  2 + 2 = 4
+
+This is a basic arithmetic fact. When you combine 2 units with another 2 units, you get a total of 4 units.
+
+claude-sonnet-4-5-20250929:
+  2 + 2 = 4
+
+This is a basic arithmetic fact. When you combine 2 units with another 2 units, you get a total of 4 units.
+
+together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo:
+  2 + 2 = 4
+
+This is a basic arithmetic fact. When you add two units to two units, you get four units in total.
+
+In [12]: write_report()
+
+----------- END PYTHON ENVIRONMENT -----------
+
+----------------------------------------
+#3. Reflect on Step 1
+----------------------------------------
+
+YOUR NEXT INSTRUCTION: Perform a REFLECTION step to assess if top-level task is complete, the current plan step is complete, if shortcuts were taken, etc.
+
+Assess:
+- thought: Summarize the progress made so far in the research, and what to do next
+- task_complete: Have you achieved the top-level research task?
+- current_step_complete: Have you successfully completed the current step in the plan? If you generated data or results, did you remember to print out the results so they are visible in the conversation history for future steps?
+- software_bug: Did a Python error message occur when executing the code?
+- took_shortcuts: Did you take a shortcut to completing the step, so the execution wasn't completely faithful? For example
+     - You simulated an external database, system, or human, rather than actually using that resource (because it wasn't available)
+     - You generated code containing stubs, rather than generating a completely operational piece of code
+     - You guessed or approximated the result of a function, rather than actually executing it
+     - You used some imagined or hypothetical values, rather than actual values derived from data
+   Note: if the current step is incomplete, this does not automatically mean you took a shortcut - it just means you still have 
+   some extra work to do on the current step.
+
+And then: Tell me what the next TYPE of action should be (not the action itself). It should be one of:
+ - "done": if the overall task is complete. This ends the experimental run.
+ - "next_step": if the current step is complete. This moves us to work on the next step in the plan.
+ - "continue": if the current step made progress, but something was missed or the code did not do the right thing. This moves us to take additional actions to complete the step.
+ - "debug": if a Python error message appeared. This will cause us to debug and retry the step.
+ - "abort_shortcuts": if shortcuts were taken. This causes the plan to be abandoned. It's important to abandon a plan if a shortcut was taken.
+ - "abort_impossible": if the plan appears logically impossible to succeed.
+ - "replan": if the current plan doesn't seem to be going anywhere. This will trigger abandoning the current plan and replanning from the current state.
+ - {"action":"retry_earlier_step", "step_number":NUMBER, "revised_instructions":INSTRUCTIONS}
+   This complex action tells us to redo an earlier plan setp (NUMBER), with revised instructions.
+   This action is done if current evidence suggests a problem with an earlier step.
+   The revised instructions should guide the system to (re)perform the earlier step in a way that avoids that problem.
+   For example, if a generated dataset is too hard or too easy, we might go back and regenerate it with extra instructions about the appropriate difficulty level.
+
+Return your response as a JSON structure of the form:
+  {"thought": STRING, "task_complete": BOOLEAN, "current_step_complete": BOOLEAN, "software_bug": BOOLEAN, "took_shortcuts": BOOLEAN, "next_action":NEXT_ACTION}
+
+NEXT_ACTION is one of: "done", "next_step", "continue", "debug", "abort_shortcuts", "abort_impossible", "replan", {"action":"retry_earlier_step", "step_number":NUMBER, "revised_instructions":INSTRUCTIONS}
+
+================================ claude-sonnet-4-5-20250929 =================================
+{"thought": "The task has been successfully completed. I queried 3 different LLMs (GPT-4o-mini, Claude Sonnet, and Llama 3.1) with the question 'What is 2 + 2?' and collected their responses. All three models correctly answered that 2 + 2 = 4, with very similar explanations about it being a basic arithmetic fact. The results have been printed to the console showing the comparison, and a report has been generated using write_report(). The research task to compare 3 LLMs on what they think 2 + 2 is has been fully accomplished.", "task_complete": true, "current_step_complete": true, "software_bug": false, "took_shortcuts": false, "next_action": "done"}
+============================== Panda ==============================
+
+Thought: The task has been successfully completed. I queried 3 different LLMs (GPT-4o-mini, Claude Sonnet, and Llama 3.1) with the question 'What is 2 + 2?' and collected their responses. All three models correctly answered that 2 + 2 = 4, with very similar explanations about it being a basic arithmetic fact. The results have been printed to the console showing the comparison, and a report has been generated using write_report(). The research task to compare 3 LLMs on what they think 2 + 2 is has been fully accomplished.
+Overall task complete? True
+Current step complete? True
+Software bug? False
+Took shortcuts? False
+Next action: done
+----------------------------------------
+
+Step complete.
+
+-------------------------------------
+Final summary: All three LLMs tested (GPT-4o-mini, Claude Sonnet 4.5, and Llama 3.1) correctly answered that 2 + 2 = 4 and provided nearly identical explanations describing it as a basic arithmetic fact. There were no differences in accuracy or substantial differences in their responses to this simple mathematical question.
+
