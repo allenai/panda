@@ -22,4 +22,9 @@ setup(
     author='Peter Clark',
     description='An AI tool for autonomous scientific research',
     python_requires='>=3.7',
+    entry_points={
+        'console_scripts': [
+            'panda = panda.run_panda:main'  # adjust if you rename the file
+        ]
+    }
 )

@@ -56,7 +56,7 @@ Note: if prompt is a list of messages, then model must be a GPT
 """
 
 config.doc['call_llm'] = f"""
-def call_llm(prompt:str, model:str, temperature:int=0):
+def call_llm(prompt:str, model:str, temperature:float=0):
 Purpose:
     Basic access to an LLM.
 Args:
@@ -90,12 +90,11 @@ def call_llm(prompt, response_format={"type":"text"}, model=agent_config.PANDA_L
         answer =  call_litellm(prompt, config.DEFAULT_CLAUDE_MODEL, quiet=quiet)
     elif model == "claude-3.5":
         answer =  call_litellm(prompt, config.CLAUDE35_MODEL, quiet=quiet)
-    else:        
+    elif model.startswith(("claude", "llama", "meta", "mistral")):
         answer =  call_litellm(prompt, model, quiet=quiet)        		# NEW: Allow any LiteLLM to be explicitly specified
-        
-#    else:
-#        logger.error(f"Unrecognized model: {model}")
-#        answer =  f"Unrecognized model: {model}"
+    else:
+        logger.error(f"Unrecognized model: {model}")
+        answer =  f"Unrecognized model: {model}"
 
 # This is a bit of a sledgehammer that can remove some important characters. ChatGPT suggests unidecode instead which tries an ascii approximation.
 # https://chatgpt.com/share/68b086e0-ad2c-8001-bb07-6d5d60cc4c16
@@ -333,8 +332,8 @@ def call_litellm(prompts0, model=config.DEFAULT_CLAUDE_MODEL, quiet=True):
 # or <abbreviated-json-schema> that's expanded by build_gpt_response_format into {"type":"json_schema","json_schema":...}
 def raw_call_gpt(prompts0, response_format={"type":"text"}, temperature=0, openai_api_key=config.OPENAI_API_KEY, quiet=True, model=config.DEFAULT_GPT4_MODEL):
 
-#    logger.debug(f"DEBUG: Calling GPT with temperature={temperature}, model={model}...")
-#    logger.debug("DEBUG: response_format =", response_format)
+#   logger.debug(f"DEBUG: Calling GPT with temperature={temperature}, model={model}...")
+#   logger.debug("DEBUG: response_format =", response_format)
 #    input("pause...")
     ### estimate max word length (given max token length)
     def max_words(model=config.DEFAULT_GPT4_MODEL):

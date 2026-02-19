@@ -70,7 +70,7 @@ Here are two built-in Python functions that might be useful for you:
 
 (a) Basic Calls to a LLM
 
-def call_llm(prompt:str, model:str, temperature:int=0):
+def call_llm(prompt=prompt:str, model=model:str, temperature=temperature:float=0):
 Purpose:
     Basic access to an LLM.
 Args:
@@ -80,7 +80,7 @@ Args:
 Returns:
     response (str): The LLM response.
 Example:
-    call_llm("Generate a new research idea about large language models.")
+    call_llm(prompt="Generate a new research idea about large language models.")
 ->  Title: Investigating the Impact of Multimodal Inputs on Large Language ....
 
 (b) Writing a Report

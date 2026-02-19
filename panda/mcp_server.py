@@ -17,7 +17,7 @@ This file declares three MCP tools that hook into Panda:
 ----------
 
 Top-level call to Panda:
-  run_panda(task, background_knowledge=None, force_report=True, outputs_dir="output_iterpanda")            
+  run_panda(task, background_knowledge=None, force_report=True, outputs_dir="experiments/")
   Cursor usage:
   Call start_research with task='What is 1 + 1?'
   Call start_research with task='What is 1 + 1?' and folder='reports/2025-10-07'
@@ -36,7 +36,7 @@ import logging
 
 import panda
 
-CURSOR_EXPT_FOLDER = "output_iterpanda"
+CURSOR_EXPT_FOLDER = "experiments/"
 LOG_PATH = "C:/Users/peter/Dropbox/Desktop/2025/Panda/panda/run_panda.log"
 
 mcp = FastMCP("panda")
