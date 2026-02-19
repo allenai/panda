@@ -19,14 +19,15 @@ def main():
     parser.add_argument("task", help="The research or analysis question to run.")
     parser.add_argument("--task_file", help="A text file containing the research or analysis question to run.")
     parser.add_argument("--background_knowledge", default=None, help="Additional context for the task.")
-    # if flag missing, args.force_report=False
-    parser.add_argument("--force_report", action="store_true", help="If set, always return a report under all circumstances.")
+    parser.add_argument("--no_force_report", action="store_false", dest="force_report", help="If set, do not force a report.")    
+#   parser.add_argument("--force_report", action="store_true", help="If set, always return a report under all circumstances.")
     parser.add_argument("--outputs_dir", default="output", help="Where to place the experiment artifacts, relative to the Panda directory.")
     args = parser.parse_args()
 
     # Call into your package
     panda.run_panda(
         task=args.task,
+        task_file=args.task_file,
         background_knowledge=args.background_knowledge,
         force_report=args.force_report,
         outputs_dir=args.outputs_dir

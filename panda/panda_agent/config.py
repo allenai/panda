@@ -35,7 +35,7 @@ ADVICE_FILE = os.path.join(MODULE_DIR, "advice.txt")
 
 VERSION_FILE = os.path.join(MODULE_DIR, "../../VERSION")	# bit ugly, peeking out of the package directory....
 with open(VERSION_FILE, 'r') as f:
-    VERSION = f.read()    
+    VERSION = f.read().strip() 
 
 # ----------
 

@@ -67,7 +67,7 @@ from . import config as agent_config
 from .panda_agent_subprompts import *
 
 ### These are the TOOLS available to Panda for research (for now). 
-from panda.utils import call_llm, llm_list, get_token_counts, code_asks_for_user_input, logger, remove_trailing_newline, file_exists
+from panda.utils import call_llm, llm_list, get_token_counts, code_asks_for_user_input, logger, remove_trailing_newline, file_exists, read_file_contents
 # researchworld not really helpful any more
 #from panda.researchworld import create_dataset, answer_questions, score_answers, spearman_strength, pearson_strength, ideate_categories, examples_in_category
 #from panda.researchworld import get_function_documentation, get_workflow_documentation, get_plan_documentation
@@ -170,7 +170,16 @@ RETURNS:
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
 """
-def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir=None, experiment_subdir=None):
+def run_panda(task=None, task_file=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir=None, experiment_subdir=None):
+
+    if isinstance(task_file, str):
+        if file_exists(task_file):
+            print_to_user(f"Reading task from {task_file}...")
+            task = read_file_contents(task_file)
+        else:
+            message = f"ERROR! Task file {task_file} doesn't exist! Aborting..."
+            logger.error(message)
+            raise ValueError(message)
 
     if outputs_dir is None:
         outputs_dir = os.path.join(agent_config.ROOT_DIR, "output")
@@ -352,8 +361,6 @@ def reset_panda_session():
 # Build system prompt dynamically, to accomodate changing researchworld function documenntation and example workflows
 def build_system_prompt(allow_shortcuts=False):
     global SYSTEM_PROMPT, REFLECTION_SUBPROMPT, PLAN_REFLECTION_SUBPROMPT
-
-    logger.debug("DEBUG: Building system prompt...")
 
     if allow_shortcuts:
         REFLECTION_SUBPROMPT = REFLECTION_SUBPROMPT_ALLOW_SHORTCUTS
