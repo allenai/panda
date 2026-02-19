@@ -33,9 +33,14 @@ ADVICE_FILE = os.path.join(MODULE_DIR, "advice.txt")
 
 # ----------
 
-VERSION_FILE = os.path.join(MODULE_DIR, "../../VERSION")	# bit ugly, peeking out of the package directory....
-with open(VERSION_FILE, 'r') as f:
-    VERSION = f.read().strip() 
+from importlib.metadata import version
+VERSION = version('panda')
+
+# This is bad coding practice, as it requires an extra file; in addition, that file is not included in the site
+# package when installed as a tool (the site package is only the panda/ subdirectory files)
+#VERSION_FILE = os.path.join(MODULE_DIR, "../../VERSION")	# bit ugly, peeking out of the package directory....
+#with open(VERSION_FILE, 'r') as f:
+#    VERSION = f.read().strip() 
 
 # ----------
 

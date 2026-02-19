@@ -16,7 +16,7 @@ import panda
 
 def main():
     parser = argparse.ArgumentParser(description="Run Panda tasks from the command line.")
-    parser.add_argument("task", help="The research or analysis question to run.")
+    parser.add_argument("--task", help="The research or analysis question to run.")
     parser.add_argument("--task_file", help="A text file containing the research or analysis question to run.")
     parser.add_argument("--background_knowledge", default=None, help="Additional context for the task.")
     parser.add_argument("--no_force_report", action="store_false", dest="force_report", help="If set, do not force a report.")    
