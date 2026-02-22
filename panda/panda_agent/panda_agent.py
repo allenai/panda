@@ -170,16 +170,8 @@ RETURNS:
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
 """
-def run_panda(task=None, task_file=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir=None, experiment_subdir=None):
-
-    if isinstance(task_file, str):
-        if file_exists(task_file):
-            print_to_user(f"Reading task from {task_file}...")
-            task = read_file_contents(task_file)
-        else:
-            message = f"ERROR! Task file {task_file} doesn't exist! Aborting..."
-            logger.error(message)
-            raise ValueError(message)
+def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, \
+              outputs_dir=None, experiment_subdir=None, task_file=None, background_knowledge_file=None, results_file=None):
 
     if outputs_dir is None:
         outputs_dir = os.path.join(agent_config.ROOT_DIR, "output")
@@ -188,6 +180,14 @@ def run_panda(task=None, task_file=None, background_knowledge=None, plan=None, f
     if experiment_subdir is None:
         now_str = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
         experiment_subdir = "experiment-"+now_str
+
+    # if files provided, read info from them        
+    task = get_item_from_var_or_file(item=task, item_file=task_file)
+    background_knowledge = get_item_from_var_or_file(item=background_knowledge, item_file=background_knowledge_file)
+    if not task:
+        message = f"ERROR! No task or task_file specified! Aborting..."
+        logger.error(message)
+        raise ValueError(message)            
         
     output_dir = os.path.join(outputs_dir, experiment_subdir)
     os.makedirs(output_dir, exist_ok=True)
@@ -287,9 +287,27 @@ def run_panda(task=None, task_file=None, background_knowledge=None, plan=None, f
     os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
 
     # Note we should *always* return report_pathstem, even if there's no report, so we can at least see the artifacts, traces, etc.
-    logger.debug(f"DEBUG: run_panda(): result_flag = {result_flag}, report_pathstem = {report_pathstem}, summary = {summary}, token_counts = {token_counts}")
-#   return result_flag, report_pathstem, summary, token_counts    
-    return {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}
+    result = {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}    
+    logger.debug(f"DEBUG: run_panda(): result = {result}")
+    if results_file is not None:
+        with open(results_file, "w", encoding="utf-8") as file:
+            json.dump(results, f)            
+    return result
+
+# ----------
+
+# If item_file exists, read item from file. Otherwise simply use the supplied item
+def get_item_from_var_or_file(item=None, item_file=None, type="file"):
+    # item: If file provided, this overrides any directly provided info
+    if isinstance(item_file, str):
+        if file_exists(item_file):
+            print_to_user(f"Reading {type} from {item_file}...")
+            item = read_file_contents(item_file)
+        else:
+            message = f"ERROR! {type} file {item_file} doesn't exist! Aborting..."
+            logger.error(message)
+            raise ValueError(message)
+    return item
 
 # ----------
 
