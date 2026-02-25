@@ -24,7 +24,7 @@ setup(
     python_requires='>=3.7',
     package_data={
         "panda": ["panda_agent/*.txt","panda_agent/*.html"]
-        }
+        },
     include_package_data=True,	# when setting up a *tool*, include the package_data files ALSO
     entry_points={
         'console_scripts': [
