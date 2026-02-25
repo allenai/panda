@@ -5,14 +5,22 @@ Panda signature:
 def run_panda(task=None, plan=None, background_knowledge=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, outputs_dir="output"):
 
 Usage:
-% python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
+% conda activate panda
+(panda) % python -m panda.run_panda--task "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
 Optional arguments:
   --force_report     - force Panda to *always* write a report on its work
   --outputs_dir      - directory for the experimental results directory (containing report and other artifacts). Default is output/
+
+Or install as a tool:
+% uv tool install git+https://github.com/allenai/panda --force
+	# executable placed in %USERPROFILE%/Users/peter/.local/bin [PC]  ~/.local/bin [Mac]
+	# source files are placed in %USERPROFILE%/AppData/Local/uv/tools/
+% panda --task "What is 1 + 1?"
 """
 
 import argparse
-import panda
+#import panda
+from .panda_agent import run_panda	# import the function (not this file!)
 
 def main():
     parser = argparse.ArgumentParser(description="Run Panda tasks from the command line.")
