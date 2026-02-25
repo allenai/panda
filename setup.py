@@ -1,4 +1,4 @@
-import os
+2import os
 from setuptools import setup, find_packages
 
 setup(

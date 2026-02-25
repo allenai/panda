@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     # Call into your package
-    panda.run_panda(
+    run_panda(
         task=args.task,
         task_file=args.task_file,
         background_knowledge=args.background_knowledge,
