@@ -22,6 +22,10 @@ setup(
     author='Peter Clark',
     description='An AI tool for autonomous scientific research',
     python_requires='>=3.7',
+    package_data={
+        "panda": ["panda_agent/*.txt","panda_agent/*.html"]
+        }
+    include_package_data=True,	# when setting up a *tool*, include the package_data files ALSO
     entry_points={
         'console_scripts': [
             'panda = panda.run_panda:main'  # adjust if you rename the file
