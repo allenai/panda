@@ -18,25 +18,24 @@ def main():
     parser = argparse.ArgumentParser(description="Run Panda tasks from the command line.")
     parser.add_argument("--task", help="The research or analysis question to run.")
     parser.add_argument("--task_file", default=None, help="A text file containing the research or analysis question to run.")
-    parser.add_argument("--background_knowledge_file", default=None, help="A text file containing additional context for the task.")    
     parser.add_argument("--background_knowledge", default=None, help="Additional context for the task.")
+    parser.add_argument("--background_knowledge_file", default=None, help="A text file containing additional context for the task.")    
     parser.add_argument("--force_report", action="store_true", help="If set, always return a report under all circumstances.")
     parser.add_argument("--outputs_dir", default="output", help="Where to place all experiments artifacts, relative to the Panda directory.")
     parser.add_argument("--experiment_subdir", default=None, help="Where to place this specific experiment's artifacts, relative to the Panda directory.")
-    parser.add_argument("--results_file", default=None, help="Where to place the JSON results.")
+    parser.add_argument("--result_file", default=None, help="Where to place the JSON result.")
     args = parser.parse_args()
 
     # Call into your package
     panda.run_panda(
         task=args.task,
-        background_knowledge=args.background_knowledge,
         task_file=args.task_file,
         background_knowledge=args.background_knowledge,
         background_knowledge_file=args.background_knowledge_file,                
         force_report=args.force_report,
         outputs_dir=args.outputs_dir,
         experiment_subdir=args.experiment_subdir,
-        results_file=args.results_file
+        result_file=args.result_file
     )
 
 if __name__ == "__main__":

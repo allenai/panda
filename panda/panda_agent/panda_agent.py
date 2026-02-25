@@ -171,7 +171,7 @@ If a report wasn't generated, and you want one, call write_report() which return
 
 """
 def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, \
-              outputs_dir=None, experiment_subdir=None, task_file=None, background_knowledge_file=None, results_file=None):
+              outputs_dir=None, experiment_subdir=None, task_file=None, background_knowledge_file=None, result_file=None):
 
     if outputs_dir is None:
         outputs_dir = os.path.join(agent_config.ROOT_DIR, "output")
@@ -182,8 +182,8 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
         experiment_subdir = "experiment-"+now_str
 
     # if files provided, read info from them        
-    task = get_item_from_var_or_file(item=task, item_file=task_file)
-    background_knowledge = get_item_from_var_or_file(item=background_knowledge, item_file=background_knowledge_file)
+    task = get_item_from_var_or_file(item=task, item_file=task_file, type="task")
+    background_knowledge = get_item_from_var_or_file(item=background_knowledge, item_file=background_knowledge_file, type="background knowledge")
     if not task:
         message = f"ERROR! No task or task_file specified! Aborting..."
         logger.error(message)
@@ -289,9 +289,9 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
     # Note we should *always* return report_pathstem, even if there's no report, so we can at least see the artifacts, traces, etc.
     result = {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}    
     logger.debug(f"DEBUG: run_panda(): result = {result}")
-    if results_file is not None:
-        with open(results_file, "w", encoding="utf-8") as file:
-            json.dump(results, f)            
+    if result_file is not None:
+        with open(result_file, "w", encoding="utf-8") as f:
+            json.dump(result, f)            
     return result
 
 # ----------
