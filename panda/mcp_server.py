@@ -95,8 +95,9 @@ def start_auto_research() -> dict:
     job_id = str(uuid.uuid4())
     workspace_folder = os.getenv("WORKSPACE_FOLDER")
     if workspace_folder is None:
-        logger.warning(f"Yikes! Environment variable WORKSPACE_FOLDER not defined, please define it! Assuming Panda root dir ({agent_config.ROOT_DIR}) for now....")
-        workspace_folder = panda.panda_agent.config.ROOT_DIR
+        logger.warning(f"Yikes! Environment variable WORKSPACE_FOLDER not defined, please define it! Assuming current working directory for now...")
+        workspace_folder = "."
+#       workspace_folder = panda.panda_agent.config.ROOT_DIR
     _jobs[job_id] = {"status": "running", "result": None, "error": None}
     threading.Thread(target=_worker2, args=(job_id,workspace_folder), daemon=True).start()
     return {"job_id": job_id, "status": "running"}

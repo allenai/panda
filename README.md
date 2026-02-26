@@ -1,4 +1,4 @@
-# Panda v1.5.0
+# Panda v1.5.1
 
 # Overview
 
@@ -11,8 +11,10 @@ For an example output report and trace, see the /output directory. The .html fil
 ## Instructions
 
 1. Panda makes calls to an underlying LLM, the default is set in PANDA_LLM in panda_agent/config.py. (You can also specify a different one at runtime). 
+
 2. Make sure you have the appropriate API keys set for the LLM(s) you need (e.g., for PANDA_LLM defined in panda_agent/config.py, currently Claude).  If you want to use OpenAI (GPT), set in the environment variable OPENAI\_API\_KEY. If you want to use Mistral/LLama, set TOGETHER\_API\_KEY. If you want to use Claude, set ANTHROPIC\_API\_KEY.
-3. Create a new conda environment for panda:
+
+3. **Either** Run from Python. Create a new conda environment for panda:
 
 ```
 % git clone https://github.com/allenai/panda.git
@@ -21,20 +23,49 @@ For an example output report and trace, see the /output directory. The .html fil
 % conda activate panda
 (panda) % conda install pip                  # if not installed
 (panda) % pip install -e .
-```
-then...
-
-3.1 Run from command line:
-```
 % conda activate panda                       # if not already in panda environment
-(panda) % python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
+(panda) % python run_panda.py "What is 1 + 1?" [--force_report] [--outputs_dir <directory>]
 ```
 With optional arguments:
   --force_report     - force Panda to *always* write a report on its work
-  --outputs_dir      - directory for the experimental results directory (containing report and other artifacts). Default is output/
+  --outputs_dir      - directory for the experimental results directory (containing report and other artifacts). Default is current working directory.
 
+3.2 **OR** Run as a tool:
 
-3.2 OR Run from iPython interactively
+```
+# Install globally using uv
+uv tool install git+https://github.com/allenai/panda
+```
+Then in the tool call:
+
+1. describe the research task (TASK) and (optionally) background knowledge (BACKGROUND_KNOWLEDGE), **or**
+2. provide paths to *files* that contain
+     a. the task (TASK_FILE)
+     b. (optionally) the background knowledge (BACKGROUND_KNOWLEDGE_FILE)
+
+also you can optionally provide:
+  3. a directory to place the experimental outputs in (OUTPUTS_DIR). This defaults to the current working directory.
+  4. a path to a JSON file to place the result summary in (RESULT_FILE). If not specified, the result is only returned from this tool call to the user and not saved to disk.
+
+This looks like, for supplying the task in-line:
+```bash
+panda --task TASK --background_knowledge BACKGROUND_KNOWLEGE --force_report --result_file RESULT_FILE --outputs_dir OUTPUTS_DIR
+```
+For example:
+```bash
+panda --task "Perform an experiment to assess how good gpt-4o is at translating into French. Use just 5 test examples." --force_report --outputs_dir "C:/Users/peter/my_project/experiments/" --result_file "C:/Users/peter/my_project/result.json"
+```
+or for supplying the task using files:
+```bash
+panda --task_file TASK_FILE --background_knowledge_file BACKGROUND_KNOWLEGE_FILE --force_report --result_file RESULT_FILE --outputs_dir OUTPUTS_DIR
+```
+for example:
+```
+```bash
+panda --task_file "C:/Users/peter/my_project/task.txt" --background_knowledge_file "C:/Users/peter/my_project/background_knowledge.txt" --force_report --outputs_dir "C:/Users/peter/my_project/experiments/" --result_file "C:/Users/peter/my_project/result.json"
+```
+
+3.3 **OR** Run from iPython interactively
 To run, go the top-level panda directory, then start ipython:
 ```
 % conda activate panda                       # if not already in panda environment
@@ -49,7 +80,7 @@ What is the next research action/task you'd like me to do (or 'q' to quit)? End 
 
 **NOTE** hit \<return\> ***twice*** after you enter your task. If nothing seems to be happening, it's likely because you need to hit \<return\> a second time.
 
-3.3 OR Run from iPython programmatically, passing the task as an argument
+You can alternatively pass the task as an argument
 
 ```
 In [4]: result = panda.run_panda(task="What is 1 + 1?", force_report=True)
@@ -165,6 +196,7 @@ The step counter ensures that the plan is followed systematically without skippi
  * v1.4.9: Add MCP interface (panda/mcp_server.py) and command line execution (python run_panda.py "What is 1 + 1?")
  * v1.4.10: Add superpanda_interactive.py (exploratory), minor code updates
  * v1.5: Remove researchworld and built-in research functions (not needed, can bias against good research decisions)
+ * v1.5.1: Remove evaluation code (not strictly part of Panda itself)
 
 # Questions, Issues, and Further Information
 

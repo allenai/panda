@@ -13,7 +13,8 @@ STEPPANDA_LLM = PANDA_LLM	# relies on class...
 
 # Get the directory where my_globals.py is located (i.e., panda_agent)
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))		# panda/panda/panda_agent
-ROOT_DIR = os.path.dirname(os.path.dirname(MODULE_DIR))		# panda/panda/
+# No, dangerous when running as a tool as this will point to the site installation directory
+#ROOT_DIR = os.path.dirname(os.path.dirname(MODULE_DIR))		# panda/panda/
 
 # ==================================================
 # Globals for main Panda

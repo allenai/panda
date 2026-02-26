@@ -169,12 +169,11 @@ RETURNS:
  - the filestem of a report (if one was generated)
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
+NOTE: outputs_dir = "output", relative to the current working directory
+
 """
 def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, \
-              outputs_dir=None, experiment_subdir=None, task_file=None, background_knowledge_file=None, result_file=None):
-
-    if outputs_dir is None:
-        outputs_dir = os.path.join(agent_config.ROOT_DIR, "output")
+              outputs_dir="output", experiment_subdir=None, task_file=None, background_knowledge_file=None, result_file=None):
 
     # Let's switch to a new directory for a new run:
     if experiment_subdir is None:
@@ -284,7 +283,7 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
     with open(report_pathstem + "-done.txt", "w", encoding="utf-8") as file:
         file.write(result_flag+"\n")
     
-    os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
+#   os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
 
     # Note we should *always* return report_pathstem, even if there's no report, so we can at least see the artifacts, traces, etc.
     result = {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}    
