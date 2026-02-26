@@ -169,11 +169,11 @@ RETURNS:
  - the filestem of a report (if one was generated)
 If a report wasn't generated, and you want one, call write_report() which return a filestem
 
-NOTE: outputs_dir = "output", relative to the current working directory
+NOTE: outputs_dir = "experiments", relative to the current working directory
 
 """
 def run_panda(task=None, background_knowledge=None, plan=None, force_report=False, thread_id=None, reset_namespace=True, allow_shortcuts=False, model=agent_config.PANDA_LLM, reset_dialog=True, \
-              outputs_dir="output", experiment_subdir=None, task_file=None, background_knowledge_file=None, result_file=None):
+              outputs_dir="experiments", experiment_subdir=None, task_file=None, background_knowledge_file=None, result_file=None):
 
     # Let's switch to a new directory for a new run:
     if experiment_subdir is None:
