@@ -187,10 +187,12 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
         message = f"ERROR! No task or task_file specified! Aborting..."
         logger.error(message)
         raise ValueError(message)            
-        
+
+    current_working_directory = os.getcwd()    				  # make a note, to return to it afterwards
     output_dir = os.path.join(outputs_dir, experiment_subdir)
     os.makedirs(output_dir, exist_ok=True)
     os.chdir(output_dir)
+
     report_pathstem = os.path.abspath("experiment").replace("\\", "/")    # Use "/" for standardized (POSIX) path format
     my_globals.report_pathstem = report_pathstem			  # store this in a global for use by report_writer.py
 
@@ -283,7 +285,7 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
     with open(report_pathstem + "-done.txt", "w", encoding="utf-8") as file:
         file.write(result_flag+"\n")
     
-#   os.chdir(agent_config.ROOT_DIR)		# make sure you're back at the top
+    os.chdir(current_working_directory)		# make sure you're back where you were
 
     # Note we should *always* return report_pathstem, even if there's no report, so we can at least see the artifacts, traces, etc.
     result = {"result_flag":result_flag, "report_pathstem":report_pathstem, "summary":summary, "token_counts":token_counts}    
