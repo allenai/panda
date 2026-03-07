@@ -21,9 +21,11 @@ Or install as a tool:
 import argparse
 #import panda
 from .panda_agent import run_panda	# import the function (not this file!)
+from .panda_agent.config import VERSION
 
 def main():
     parser = argparse.ArgumentParser(description="Run Panda tasks from the command line.")
+    parser.add_argument("--version", action="version", version=f"%(prog)s {VERSION}")
     parser.add_argument("--task", help="The research or analysis question to run.")
     parser.add_argument("--task_file", default=None, help="A text file containing the research or analysis question to run.")
     parser.add_argument("--background_knowledge", default=None, help="Additional context for the task.")
