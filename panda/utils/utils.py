@@ -5,33 +5,50 @@ from html.parser import HTMLParser
 import unicodedata
 from .logger import logger
 
-def clean_extract_json(string):
-    try:
-#       return clean_keys(json.loads(string))
-        return clean_keys(extract_json_from_string(string))    
-    except Exception as e:
-        message = f"Error: {e}\nFailed to parse JSON string:\n{repr(string)}\n(Answer from LLM too long/complex? Try a simpler question/query to the LLM)"
-        logger.info(message)
-        raise ValueError(message)
+# New version, courtesy of Claude
+def extract_json_from_string(text: str) -> any:
+    """
+    Robustly parse JSON from a Claude API response string.
+    Handles:
+      - Raw JSON strings
+      - JSON wrapped in ```json ... ``` code fences
+      - JSON wrapped in ``` ... ``` code fences (no language tag)
+      - Surrounding text before/after the fenced block
+    """
+    if not text or not text.strip():
+        raise ValueError("Empty response")
 
-# Courtesy Gemini
-def extract_json_from_string(input_string):
-    # Regular expression to find JSON within triple backticks (```json ... ```)
-    match = re.search(r"```json\s*([\s\S]*?)\s*```", input_string)
-    if match:
-        json_string = match.group(1)  # Extract the JSON string
-    else:
-        # If no backticks are found, try to find JSON directly in the string
-        match = re.search(r"\{[\s\S]*\}", input_string) # Matches curly braces
-        if match:
-            json_string = match.group(0)
-        else:
-            raise ValueError("No JSON found in the input string.")
+    # 1. Try to extract from a code fence (```json or ``` with optional language tag)
+    fence_pattern = re.compile(
+        r'```(?:json)?\s*\n(.*?)\n\s*```',
+        re.DOTALL | re.IGNORECASE
+    )
+    matches = fence_pattern.findall(text)
+    for match in matches:
+        candidate = match.strip()
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            continue  # try next match if multiple fences
+
+    # 2. Try parsing the whole string as-is
     try:
-        data = json.loads(json_string)  # Parse the JSON string
-        return data
-    except json.JSONDecodeError as e:
-        raise json.JSONDecodeError(msg=str(e), doc=e.doc, pos=e.pos) # Correct re-raising
+        return json.loads(text.strip())
+    except json.JSONDecodeError:
+        pass
+
+    # 3. Heuristic: find the first { or [ and try to parse from there
+    for start_char, end_char in [('{', '}'), ('[', ']')]:
+        start = text.find(start_char)
+        end = text.rfind(end_char)
+        if start != -1 and end != -1 and end > start:
+            candidate = text[start:end + 1]
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+
+    raise ValueError(f"No valid JSON found in response: {text[:200]!r}")    
 
 # ----------    
 
@@ -57,25 +74,6 @@ def extract_txt_from_string(text):
             return match.group(1)    
         else:
             return text
-
-### --------------------
-
-### remove spaces in keys recursively (for nested dictionaries) 
-### Motivation: GPT occasionally adds extra unwanted spaces in keys - maybe unnneeded in time
-def clean_keys(data):
-    if isinstance(data, dict):
-        # Clean dictionary keys and recursively process values
-        cleaned_data = {}
-        for key, value in data.items():
-            cleaned_key = key.strip()
-            cleaned_data[cleaned_key] = clean_keys(value)  # Recursive call
-        return cleaned_data
-    elif isinstance(data, list):
-        # Recursively process each item in the list
-        return [clean_keys(item) for item in data]
-    else:
-        # If the data is neither a dict nor a list, return it as is
-        return data
 
 ### ======================================================================
 ###	Courtesy Gemini

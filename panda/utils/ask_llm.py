@@ -26,7 +26,7 @@ from pydantic import BaseModel
 from openai import OpenAI
 
 from . import config			# import entire file
-from .utils import clean_extract_json	# import function
+from .utils import extract_json_from_string	# import function
 from .logger import logger, with_quiet_logging
 from panda.panda_agent import config as agent_config
 
@@ -131,7 +131,7 @@ def call_llm_json(prompt, response_format={"type":"json_object"}, temperature=0,
                 elif isinstance(prompt, list):
                     prompt[-1] += extra_advice
                 response_str = call_llm(prompt, response_format=response_format, temperature=0.7, model=model)	# make sure we get a different answer
-            return clean_extract_json(response_str), response_str
+            return extract_json_from_string(response_str), response_str
         except Exception as e:
             logger.warning(f"{model} exception {e}. (invalid JSON structure?)....retrying...")
     else:

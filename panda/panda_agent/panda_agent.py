@@ -184,9 +184,9 @@ def run_panda(task=None, background_knowledge=None, plan=None, force_report=Fals
     task = get_item_from_var_or_file(item=task, item_file=task_file, type="task")
     background_knowledge = get_item_from_var_or_file(item=background_knowledge, item_file=background_knowledge_file, type="background knowledge")
     if not task:
-        message = f"ERROR! No task or task_file specified! Aborting..."
-        logger.error(message)
-        raise ValueError(message)            
+        print_to_user("No task or task_file specified: Starting Panda in interactive mode...")
+#        logger.error(message)
+#        raise ValueError(message)            
 
     current_working_directory = os.getcwd()    				  # make a note, to return to it afterwards
     output_dir = os.path.join(outputs_dir, experiment_subdir)
