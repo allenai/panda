@@ -21,7 +21,7 @@ Or install as a tool:
 import argparse
 #import panda
 from .panda_agent import run_panda	# import the function (not this file!)
-from .panda_agent.config import VERSION
+from .panda_agent.config import VERSION, PANDA_LLM
 
 def main():
     parser = argparse.ArgumentParser(description="Run Panda tasks from the command line.")
@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--outputs_dir", default="output", help="Where to place all experiments artifacts, relative to the Panda directory.")
     parser.add_argument("--experiment_subdir", default=None, help="Where to place this specific experiment's artifacts, relative to the Panda directory.")
     parser.add_argument("--result_file", default=None, help="Where to place the JSON result.")
-    parser.add_argument("--model", default=None, help="The underlying LLM to use for Panda.")    
+    parser.add_argument("--model", default=PANDA_LLM, help="The underlying LLM to use for Panda.")    
     args = parser.parse_args()
 
     # Call into your package
