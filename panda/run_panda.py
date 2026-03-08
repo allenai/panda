@@ -6,7 +6,7 @@ def run_panda(task=None, plan=None, background_knowledge=None, force_report=Fals
 
 Usage:
 % conda activate panda
-(panda) % python -m panda.run_panda--task "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
+(panda) % python -m panda.run_panda --task "What is 1 + 1?" [--force_report] [--outputs_dir "subdir_of_panda"]
 Optional arguments:
   --force_report     - force Panda to *always* write a report on its work
   --outputs_dir      - directory for the experimental results directory (containing report and other artifacts). Default is output/
@@ -34,6 +34,7 @@ def main():
     parser.add_argument("--outputs_dir", default="output", help="Where to place all experiments artifacts, relative to the Panda directory.")
     parser.add_argument("--experiment_subdir", default=None, help="Where to place this specific experiment's artifacts, relative to the Panda directory.")
     parser.add_argument("--result_file", default=None, help="Where to place the JSON result.")
+    parser.add_argument("--model", default=None, help="The underlying LLM to use for Panda.")    
     args = parser.parse_args()
 
     # Call into your package
@@ -45,7 +46,8 @@ def main():
         force_report=args.force_report,
         outputs_dir=args.outputs_dir,
         experiment_subdir=args.experiment_subdir,
-        result_file=args.result_file
+        result_file=args.result_file,
+        model=args.model
     )
 
 if __name__ == "__main__":

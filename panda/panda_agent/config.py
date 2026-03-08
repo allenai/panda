@@ -1,7 +1,8 @@
 
 import os
 
-PANDA_LLM = "claude-sonnet-4-5-20250929"
+#PANDA_LLM = "claude-sonnet-4-5-20250929"
+PANDA_LLM = "claude-sonnet-4-6"
 REPORT_WRITER_LLM = PANDA_LLM
 REPORT_TRANSLATOR_LLM = PANDA_LLM	# convert HTML to text (not used now I think)
 
@@ -36,12 +37,6 @@ ADVICE_FILE = os.path.join(MODULE_DIR, "advice.txt")
 
 from importlib.metadata import version
 VERSION = version('panda')
-
-# This is bad coding practice, as it requires an extra file; in addition, that file is not included in the site
-# package when installed as a tool (the site package is only the panda/ subdirectory files)
-#VERSION_FILE = os.path.join(MODULE_DIR, "../../VERSION")	# bit ugly, peeking out of the package directory....
-#with open(VERSION_FILE, 'r') as f:
-#    VERSION = f.read().strip() 
 
 # ----------
 
